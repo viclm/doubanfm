@@ -1,72 +1,81 @@
 body {
-	font: 12px/18px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
-	width: 320px;
-	height: 320px;
-	margin: 0;
-	background-size: 320px 320px;
-	background-image: url(http://t3.gstatic.com/images?q=tbn:ANd9GcShJ_wfpygK5kmLglLPHW-QJ1YNK-CQtw0ShEtcJ65WA6VPdWSk);
-	color: white;
+    font: 12px/18px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
+    width: 320px;
+    height: 320px;
+    margin: 0;
+    background-size: 320px 320px;
+    background-image: url(http://t3.gstatic.com/images?q=tbn:ANd9GcShJ_wfpygK5kmLglLPHW-QJ1YNK-CQtw0ShEtcJ65WA6VPdWSk);
+    color: white;
 }
 
 header, footer {
-	background-color: rgba(0, 0, 0, 0.8);
-	padding: 10px;
+    background-color: rgba(0, 0, 0, 0.75);
+    padding: 10px;
 }
 
 h1 {
-	font-size: 1.5em;
-	margin: 0;
-	color: #139fd0;
+    font-size: 1.5em;
+    margin: 0;
+    color: #139fd0;
 }
 
 p {
-	margin: 0;
+    margin: 0;
 }
 
 a {
-	text-decoration: none;
-	text-indent: -99999px;
-	display: inline-block;
-	width: 25px;
-	height: 25px;
+    text-decoration: none;
+    text-indent: -99999px;
+    display: inline-block;
+    width: 25px;
+    height: 25px;
 }
 
 footer {
-	position: absolute;
-	bottom: 0;
-	width: 100%;
-	box-sizing: border-box;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 #controller {
-	overflow: hidden;
-	margin-bottom: 5px;
+    overflow: hidden;
+    margin-bottom: 5px;
 }
 
 #controller > div {
-	width: 33%;
-	float: left;
-	text-align: center;
+    width: 33%;
+    float: left;
+    text-align: center;
 }
 
 #play {
-	background: url(../assets/play.png) no-repeat;
+    background: url(../assets/play.png) no-repeat;
 }
 
 #next {
-	background: url(../assets/next.png) no-repeat;
+    background: url(../assets/next.png) no-repeat;
 }
 
 #prev {
-	background: url(../assets/prev.png) no-repeat;
+    background: url(../assets/prev.png) no-repeat;
 }
 
 time {
-	color: #139fd0;
+    color: #139fd0;
 }
 
-meter {
-	height: 2px;
-	width: 210px;
-	margin: 5px;
+#progress > div {
+    height: 2px;
+    width: 210px;
+    margin: 3px;
+    display: inline-block;
+    background-color: white;
+}
+
+#progress > div div {
+    width: 50%;
+    background-color: #139fd0;
+    height: 2px;
+    -webkit-transition-property: width;
 }
