@@ -1,14 +1,42 @@
 (function (window, document, undefined) {
     var audio = document.querySelector('audio');
+    var helper = document.querySelector('#helper');
     var isPlay = false;
     var playList = [];
+    var h = [];
     var current = 0;
     var time = 0;
     var p = null;
 
 
+    helper.addEventListener('canplaythrough', function () {}, false);
+
     audio.addEventListener('canplaythrough', function () {
-        console.log('canplaythrough');
+        console.log('canplaythrough', playList);
+        if (current === playList.length - 1) {
+            h = h.slice(-20);
+            ajax(
+                'get',
+                'http://douban.fm/j/mine/playlist',
+                'type=s&sid='+ h[h.length - 1].slice(1, -2) +'&h='+ h.join('') +'&channel=0&from=mainsite&r='+rand(),
+                10000,
+                function (client) {
+                    client = JSON.parse(client.responseText);
+                    playList = playList.slice(-1);
+                    for (var i = 0, len = client.song.length ; i < len ; i += 1) {
+                        if (/^\d+$/.test(client.song[i].sid)) {
+                            client.song[i].picture = client.song[i].picture.replace('mpic', 'lpic');
+                            playList.push(client.song[i]);
+                        }
+                    }
+                    current = 0;
+                    helper.src = playList[1].url;
+                }
+            );
+        }
+        else {
+            helper.src = playList[current + 1].url;
+        }
     },false);
 
     /*audio.addEventListener('progress', function () {
@@ -21,13 +49,19 @@
         var currentTime = Math.floor(audio.currentTime);
 		if (currentTime > time) {
 			time = currentTime;
-			if(p) {p.postMessage({cmd: 'progress', time: time, length: playList[current].length});}
+			if(p) {p.postMessage({cmd: 'progress', time: time, length: Math.floor(audio.duration)});}
 		}
     },false);
 
     audio.addEventListener('ended', function () {
-        console.log('ended');
+        console.log('ended', playList);
+        if (h.length && h[h.length - 1].indexOf(playList[current].sid) > -1) {h.pop();}
+        h.push('|' + playList[current].sid + ':p');
         time = 0;
+        current += 1;
+        audio.src = playList[current].url;
+        audio.play();
+        if (p) {p.postMessage({cmd: 'setCurrentSongInfo', song: getCurrentSongInfo()});}
     }, false);
 
     chrome.extension.onConnect.addListener(function(port) {
@@ -50,6 +84,13 @@
                     }
                     break;
 				case 'next':
+                    if (h.length && h[h.length - 1].indexOf(playList[current].sid) > -1) {h.pop();}
+                    h.push('|' + playList[current].sid + ':s');
+                    current += 1;
+                    audio.src = playList[current].url;
+                    audio.play();
+                    time = 0;
+                    p.postMessage({cmd: 'setCurrentSongInfo', song: getCurrentSongInfo()});
 					break;
 				case 'prev':
 					break;
@@ -61,11 +102,17 @@
                         ajax(
                             'get',
                             'http://douban.fm/j/mine/playlist',
-                            'type=n&h=&channel=0&from=mainsite&r=4941e23d79',
+                            'type=n&h=&channel=0&from=mainsite&r='+rand(),
                             10000,
                             function (client) {
                                 client = JSON.parse(client.responseText);
-                                playList = client.song;console.log(playList)
+                                playList = [];
+                                for (var i = 0, len = client.song.length ; i < len ; i += 1) {
+                                    if (/^\d+$/.test(client.song[i].sid)) {
+                                        client.song[i].picture = client.song[i].picture.replace('mpic', 'lpic');
+                                        playList.push(client.song[i]);
+                                    }
+                                }
                                 audio.src = playList[0].url;
                                 current = 0;
                                 if (isPlay) {
@@ -90,6 +137,7 @@
     function getCurrentSongInfo() {
         var song = playList[current];
         song.progress = time;
+        song.length = Math.floor(audio.duration);
 		song.isPlay = isPlay;
         return song;
     }
@@ -118,5 +166,13 @@
         client.send(data);
         setTimeout(function () {isTimeout = true;}, timeout);
     };
+
+    function rand() {
+        var charset = '1234567890abcdef', str = '';
+        for (var i = 0 ; i < 10 ; i += 1) {
+            str += charset.charAt(Math.floor(Math.random() * 16));
+        }
+        return str;
+    }
 })(this, this.document);
 

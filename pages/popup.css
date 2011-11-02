@@ -1,17 +1,21 @@
 body {
     font: 12px/18px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
-    width: 320px;
-    height: 320px;
+    width: 275px;
+    height: 275px;
     margin: 0;
-    background-size: 320px 320px;
+    background-size: 275px 275px;
     background-image: none;
 	background-color: #eee;
     color: white;
 }
 
-header, footer {
-    background-color: rgba(0, 0, 0, 0.75);
+header, footer, section {
+    background-color: rgba(0, 0, 0, 0.5);
     padding: 10px;
+}
+
+header {
+    padding: 0;
 }
 
 h1 {
@@ -62,21 +66,8 @@ footer {
     background: url(../assets/prev.png) no-repeat;
 }
 
-time {
-    color: #139fd0;
-}
-
-#progress > div {
-    height: 2px;
-    width: 198px;
-    margin: 3px;
-    display: inline-block;
-    background-color: white;
-}
-
-#progress > div div {
+header div {
     width: 0;
     background-color: #139fd0;
-    height: 2px;
-    -webkit-transition-property: width;
+    height: 5px;
 }

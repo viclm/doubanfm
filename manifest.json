@@ -11,6 +11,7 @@
 
     "browser_action": {
         "default_title": "豆瓣FM 精美版",
+        "default_icon": "assets/icon16.png",
         "default_popup": "pages/popup.html"
     },
 

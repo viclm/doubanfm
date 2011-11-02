@@ -4,24 +4,21 @@
     var play = document.querySelector('#play');
     var title = document.querySelector('h1');
     var artist = document.querySelector('p');
-    var progress = document.querySelector('#progress div div');
-    var current = document.querySelector('time');
-    var total = document.querySelector('time:nth-child(3)');
+    var progress = document.querySelector('header div');
 
     port.postMessage({cmd: 'getCurrentSongInfo'});
 
     port.onMessage.addListener(function (msg) {
         switch (msg.cmd) {
 		case 'progress':
-			current.innerHTML = strftime(msg.time);
-			progress.style.width = msg.time / msg.length * 198 + 'px';
+			progress.style.width = msg.time / msg.length * 275 + 'px';
+            progress.title = strftime(msg.time) + '/' + strftime(msg.length);
 			break;
         case 'setCurrentSongInfo':
             title.innerHTML = msg.song.title;
             artist.innerHTML = msg.song.artist + ' | ' + msg.song.albumtitle;
-            total.innerHTML = strftime(msg.song.length);
-            progress.style.width = msg.song.progress / msg.song.length * 198 + 'px';;
-            current.innerHTML = strftime(msg.song.progress);
+            progress.title = strftime(msg.song.time) + '/' + strftime(msg.song.length);
+            progress.style.width = msg.song.progress / msg.song.length * 275 + 'px';
             document.body.style.backgroundImage = 'url('+ msg.song.picture +'), url(../assets/loading.gif)';
 			isPlay = msg.song.isPlay;
 			if (isPlay) {
@@ -50,6 +47,7 @@
 
 	next.addEventListener('click', function (e) {
         port.postMessage({cmd: 'next'});
+        progress.style.width = 0;
         e.preventDefault();
     }, false);
 
@@ -60,7 +58,7 @@
 
     function strftime(seconds) {
         var minutes = Math.floor(seconds / 60), seconds = seconds % 60, str;
-        str = (minutes > 9 ? minutes : '0' + minutes) + ' : ' + (seconds > 9 ? seconds : '0' + seconds);
+        str = (minutes > 9 ? minutes : '0' + minutes) + ':' + (seconds > 9 ? seconds : '0' + seconds);
         return str;
     };
 })(this, this.document);
