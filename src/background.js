@@ -11,10 +11,18 @@
         console.log('canplaythrough');
     },false);
 
-    audio.addEventListener('progress', function () {
+    /*audio.addEventListener('progress', function () {
         var endBuf = audio.buffered.end(0);
-        time = parseInt(((endBuf / audio.duration) * 100));console.log(audio.buffered, time)
+        //time = audio.currentTime;
         //if(p) {p.postMessage({cmd: 'progress', time: time});}
+    },false);*/
+
+	audio.addEventListener('timeupdate', function () {
+        var currentTime = Math.floor(audio.currentTime);
+		if (currentTime > time) {
+			time = currentTime;
+			if(p) {p.postMessage({cmd: 'progress', time: time, length: playList[current].length});}
+		}
     },false);
 
     audio.addEventListener('ended', function () {
@@ -41,6 +49,10 @@
                         audio.pause();
                     }
                     break;
+				case 'next':
+					break;
+				case 'prev':
+					break;
                 case 'getCurrentSongInfo':
                     if (playList.length) {
                         port.postMessage({cmd: 'setCurrentSongInfo', song: getCurrentSongInfo()});
@@ -78,6 +90,7 @@
     function getCurrentSongInfo() {
         var song = playList[current];
         song.progress = time;
+		song.isPlay = isPlay;
         return song;
     }
 

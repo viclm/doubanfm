@@ -1,7 +1,7 @@
 {
-    "name": "豆瓣FM Beauty",
+    "name": "豆瓣FM 精美版",
     "version": "1.0",
-    "description": "豆瓣FM",
+    "description": "最漂亮的豆瓣电台",
 
     "icons": {
         "16": "assets/icon16.png",
@@ -10,7 +10,7 @@
     },
 
     "browser_action": {
-        "default_title": "豆瓣FM Beauty",
+        "default_title": "豆瓣FM 精美版",
         "default_popup": "pages/popup.html"
     },
 

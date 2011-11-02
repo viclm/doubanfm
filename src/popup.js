@@ -12,13 +12,24 @@
 
     port.onMessage.addListener(function (msg) {
         switch (msg.cmd) {
+		case 'progress':
+			current.innerHTML = strftime(msg.time);
+			progress.style.width = msg.time / msg.length * 198 + 'px';
+			break;
         case 'setCurrentSongInfo':
             title.innerHTML = msg.song.title;
             artist.innerHTML = msg.song.artist + ' | ' + msg.song.albumtitle;
             total.innerHTML = strftime(msg.song.length);
-            progress.style.width = msg.song.progress;
-            current.innerHTML = msg.song.progress;
-            document.body.style.backgroundImage = 'url('+ msg.song.picture +')';
+            progress.style.width = msg.song.progress / msg.song.length * 198 + 'px';;
+            current.innerHTML = strftime(msg.song.progress);
+            document.body.style.backgroundImage = 'url('+ msg.song.picture +'), url(../assets/loading.gif)';
+			isPlay = msg.song.isPlay;
+			if (isPlay) {
+				play.style.backgroundImage = 'url(../assets/pause.png)';
+			}
+			else {
+				play.style.backgroundImage = 'url(../assets/play.png)';
+			}
             break;
         default:
             document.body.style.backgroundImage = 'none';
@@ -34,6 +45,16 @@
         }
         isPlay = !isPlay;
         port.postMessage({cmd: 'switch', isPlay: isPlay});
+        e.preventDefault();
+    }, false);
+
+	next.addEventListener('click', function (e) {
+        port.postMessage({cmd: 'next'});
+        e.preventDefault();
+    }, false);
+
+	prev.addEventListener('click', function (e) {
+        port.postMessage({cmd: 'prev'});
         e.preventDefault();
     }, false);
 

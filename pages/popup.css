@@ -4,7 +4,8 @@ body {
     height: 320px;
     margin: 0;
     background-size: 320px 320px;
-    background-image: url(http://t3.gstatic.com/images?q=tbn:ANd9GcShJ_wfpygK5kmLglLPHW-QJ1YNK-CQtw0ShEtcJ65WA6VPdWSk);
+    background-image: none;
+	background-color: #eee;
     color: white;
 }
 
@@ -25,7 +26,7 @@ p {
 
 a {
     text-decoration: none;
-    text-indent: -99999px;
+    text-indent: -9999px;
     display: inline-block;
     width: 25px;
     height: 25px;
@@ -67,14 +68,14 @@ time {
 
 #progress > div {
     height: 2px;
-    width: 210px;
+    width: 198px;
     margin: 3px;
     display: inline-block;
     background-color: white;
 }
 
 #progress > div div {
-    width: 50%;
+    width: 0;
     background-color: #139fd0;
     height: 2px;
     -webkit-transition-property: width;
