@@ -5,7 +5,7 @@ body {
     margin: 0;
     background-size: 100% 100%;
     background-image: none;
-	background-color: #eee;
+    background-color: #eee;
     color: white;
 }
 
@@ -73,17 +73,27 @@ footer {
 }
 
 #repeat {
-	background: url(../assets/repeat.png) no-repeat;
+    background: url(../assets/repeat.png) no-repeat;
 }
 
+#sound {
+    background: url(../assets/sound.png) no-repeat;
+}
+
+#love {
+    background: url(../assets/love.png) no-repeat;
+}
+
+
+
 #loading {
-	background: url(../assets/loading.gif) 125px 125px no-repeat;
-	width: 100%;
-	height: 100%;
-	position: absolute;
-	left: 0;
-	top: 0;
-	background-color: rgba(255, 255, 255, 0.75);
-	z-index: -1;
-	display: none;
+    background: url(../assets/loading.gif) 125px 125px no-repeat;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    background-color: rgba(255, 255, 255, 0.75);
+    z-index: -1;
+    display: none;
 }
