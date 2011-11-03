@@ -3,7 +3,7 @@ body {
     width: 275px;
     height: 275px;
     margin: 0;
-    background-size: 275px 275px;
+    background-size: 100% 100%;
     background-image: none;
 	background-color: #eee;
     color: white;
@@ -16,6 +16,12 @@ header, footer, section {
 
 header {
     padding: 0;
+}
+
+header div {
+    width: 0;
+    background: -webkit-linear-gradient(left, #f00ea0, #ee7b20);
+    height: 5px;
 }
 
 h1 {
@@ -66,8 +72,14 @@ footer {
     background: url(../assets/prev.png) no-repeat;
 }
 
-header div {
-    width: 0;
-    background-color: #139fd0;
-    height: 5px;
+#loading {
+	background: url(../assets/loading.gif) 125px 125px no-repeat;
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	left: 0;
+	top: 0;
+	background-color: rgba(255, 255, 255, 0.75);
+	z-index: -1;
+	display: none;
 }

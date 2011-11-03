@@ -1,12 +1,14 @@
 (function (window, document, undefined) {
     var isPlay = false;
+	var timer = null;
     var port = chrome.extension.connect({name: 'fm'});
     var play = document.querySelector('#play');
     var title = document.querySelector('h1');
     var artist = document.querySelector('p');
     var progress = document.querySelector('header div');
+	var loading = document.querySelector('#loading');
 
-    port.postMessage({cmd: 'getCurrentSongInfo'});
+    port.postMessage({cmd: 'get'});
 
     port.onMessage.addListener(function (msg) {
         switch (msg.cmd) {
@@ -14,12 +16,12 @@
 			progress.style.width = msg.time / msg.length * 275 + 'px';
             progress.title = strftime(msg.time) + '/' + strftime(msg.length);
 			break;
-        case 'setCurrentSongInfo':
+        case 'set':
             title.innerHTML = msg.song.title;
             artist.innerHTML = msg.song.artist + ' | ' + msg.song.albumtitle;
             progress.title = strftime(msg.song.time) + '/' + strftime(msg.song.length);
             progress.style.width = msg.song.progress / msg.song.length * 275 + 'px';
-            document.body.style.backgroundImage = 'url('+ msg.song.picture +'), url(../assets/loading.gif)';
+            document.body.style.backgroundImage = 'url('+ msg.song.picture +')';
 			isPlay = msg.song.isPlay;
 			if (isPlay) {
 				play.style.backgroundImage = 'url(../assets/pause.png)';
@@ -27,9 +29,15 @@
 			else {
 				play.style.backgroundImage = 'url(../assets/play.png)';
 			}
+
+			if (msg.song.progress === 0) {
+				loading.style.display = 'block';
+			}
             break;
-        default:
-            document.body.style.backgroundImage = 'none';
+        case 'canplaythrough':
+            loading.style.display = 'none';
+			progress.style.width = 0;
+			break;
         }
     });
 
@@ -46,8 +54,7 @@
     }, false);
 
 	next.addEventListener('click', function (e) {
-        port.postMessage({cmd: 'next'});
-        progress.style.width = 0;
+		port.postMessage({cmd: 'next'});
         e.preventDefault();
     }, false);
 
