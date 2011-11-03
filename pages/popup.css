@@ -20,7 +20,7 @@ header {
 
 header div {
     width: 0;
-    background: -webkit-linear-gradient(left, #f00ea0, #ee7b20);
+    background: -webkit-linear-gradient(left, #ee7b20, #f00ea0);
     height: 5px;
 }
 
@@ -70,6 +70,10 @@ footer {
 
 #prev {
     background: url(../assets/prev.png) no-repeat;
+}
+
+#repeat {
+	background: url(../assets/repeat.png) no-repeat;
 }
 
 #loading {
