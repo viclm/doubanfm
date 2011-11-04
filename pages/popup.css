@@ -47,15 +47,11 @@ footer {
     bottom: 0;
     width: 100%;
     box-sizing: border-box;
+	overflow: hidden;
 }
 
-#controller {
-    overflow: hidden;
-    margin-bottom: 5px;
-}
-
-#controller > div {
-    width: 33%;
+footer > div {
+    width: 33.3%;
     float: left;
     text-align: center;
 }
@@ -82,6 +78,26 @@ footer {
 
 #love {
     background: url(../assets/love.png) no-repeat;
+}
+
+#trash {
+    background: url(../assets/trash.png) no-repeat;
+}
+
+input[type=range] {
+	-webkit-appearance:slider-vertical;
+	height: 100px;
+	width: 20px;
+	position: absolute;
+	left: 194px;
+	bottom: 32px;
+	display: none;
+}
+
+input[type=range]::-webkit-slider-thumb {
+	width: 5px;
+	height: 2px;
+	background-color: white;
 }
 
 

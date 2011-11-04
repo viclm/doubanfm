@@ -2,11 +2,10 @@
     var isPlay = false;
 	var timer = null;
     var port = chrome.extension.connect({name: 'fm'});
-    var play = document.querySelector('#play');
     var title = document.querySelector('h1');
     var artist = document.querySelector('p');
     var progress = document.querySelector('header div');
-	var loading = document.querySelector('#loading');
+	var soundCtr = document.querySelector('input[type=range]')
 
     port.postMessage({cmd: 'get'});
 
@@ -62,6 +61,52 @@
         port.postMessage({cmd: 'prev'});
         e.preventDefault();
     }, false);
+
+	sound.addEventListener('click', function (e) {
+		if (soundCtr.style.display === 'none') {
+			soundCtr.style.display = 'block';
+		}
+		else {
+			soundCtr.style.display = 'none';
+		}
+		e.preventDefault();
+	}, false);
+
+	soundCtr.addEventListener('change', function (e) {
+		port.postMessage({cmd: 'volume', value: e.target.value});
+	}, false);
+
+	repeat.addEventListener('click', function (e) {
+		if (this.className === 'on') {
+			this.style.backgroundImage = 'url(../assets/repeat.png)';
+			this.className = '';
+			port.postMessage({cmd: 'repeat', status: false});
+		}
+		else {
+			this.style.backgroundImage = 'url(../assets/repeati.png)';
+			this.className = 'on';
+			port.postMessage({cmd: 'repeat', status: true});
+		}
+        e.preventDefault();
+    }, false);
+
+	love.addEventListener('click', function (e) {
+		if (this.className === 'on') {
+			this.style.backgroundImage = 'url(../assets/love.png)';
+			this.className = '';
+			port.postMessage({cmd: 'love', status: false});
+		}
+		else {
+			this.style.backgroundImage = 'url(../assets/lovei.png)';
+			this.className = 'on';
+			port.postMessage({cmd: 'love', status: true});
+		}
+        e.preventDefault();
+    }, false);
+
+	trash.addEventListener('click', function (e) {
+		port.postMessage({cmd: 'trash'});
+	}, false);
 
     function strftime(seconds) {
         var minutes = Math.floor(seconds / 60), seconds = seconds % 60, str;

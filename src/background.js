@@ -2,6 +2,7 @@
     var audio = document.querySelector('audio');
     var helper = document.querySelector('#helper');
     var isPlay = false;
+	var isRepeat = false;
     var playList = [];
     var h = [];
     var current = 0;
@@ -26,14 +27,15 @@
     },false);
 
     audio.addEventListener('ended', function () {
-        console.log('ended', playList);
-        if (h.length && h[h.length - 1].indexOf(playList[current].sid) > -1) {h.pop();}
-        h.push('|' + playList[current].sid + ':p');
+		if (!isRepeat) {
+			if (h.length && h[h.length - 1].indexOf(playList[current].sid) > -1) {h.pop();}
+			h.push('|' + playList[current].sid + ':p');
+			current += 1;
+			audio.src = playList[current].url;
+		}
         time = 0;
-        current += 1;
-        audio.src = playList[current].url;
         audio.play();
-        if (p) {p.postMessage({cmd: 'set', song: getCurrentSongInfo()});}
+		if (p) {p.postMessage({cmd: 'set', song: getCurrentSongInfo()});}
     }, false);
 
     chrome.extension.onConnect.addListener(function(port) {
@@ -82,6 +84,41 @@
 						time = 0;
 					}
 					port.postMessage({cmd: 'set', song: getCurrentSongInfo()});
+					break;
+				case 'volume':
+					audio.volume = msg.value / 100;
+				case 'repeat':
+					isRepeat = msg.status;
+					break;
+				case 'love':
+					if (status) {
+						h.push('|' + playList[current].sid + ':r');
+					}
+					else {
+						h.pop();
+					}
+					break;
+				case 'trash':
+					if (playList[current]) {
+						if (h.length && h[h.length - 1].indexOf(playList[current].sid) > -1) {h.pop();}
+						h.push('|' + playList[current].sid + ':b');
+					
+						current += 1;
+						if (playList[current]) {
+							audio.src = playList[current].url;
+							audio.play();
+							time = 0;
+							port.postMessage({cmd: 'set', song: getCurrentSongInfo()});
+						}
+						else {
+							fetchSongs(function () {
+								audio.src = playList[current].url;
+								audio.play();
+								time = 0;
+								port.postMessage({cmd: 'set', song: getCurrentSongInfo()});
+							});
+						}
+					}
 					break;
                 case 'get':
                     if (playList.length) {
