@@ -47,7 +47,7 @@ footer {
     bottom: 0;
     width: 100%;
     box-sizing: border-box;
-	overflow: hidden;
+    overflow: hidden;
 }
 
 footer > div {
@@ -72,6 +72,10 @@ footer > div {
     background: url(../assets/repeat.png) no-repeat;
 }
 
+#repeat.on {
+    background: url(../assets/repeati.png) no-repeat;
+}
+
 #sound {
     background: url(../assets/sound.png) no-repeat;
 }
@@ -80,24 +84,31 @@ footer > div {
     background: url(../assets/love.png) no-repeat;
 }
 
+#love.on {
+    background: url(../assets/lovei.png) no-repeat;
+}
+
 #trash {
     background: url(../assets/trash.png) no-repeat;
 }
 
 input[type=range] {
-	-webkit-appearance:slider-vertical;
-	height: 100px;
-	width: 20px;
-	position: absolute;
-	left: 194px;
-	bottom: 32px;
-	display: none;
+    -webkit-appearance:none;
+    width: 100px;
+    height: 2px;
+    position: absolute;
+    left: 154px;
+    bottom: 36px;
+    background-color: white;
+    display: none;
 }
 
 input[type=range]::-webkit-slider-thumb {
-	width: 5px;
-	height: 2px;
-	background-color: white;
+    -webkit-appearance:none;
+    width: 10px;
+    height: 10px;
+    border-radius: 5px;
+    background-color: #139fd0;
 }
 
 

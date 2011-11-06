@@ -19,7 +19,8 @@
 
     "permissions": [
         "tabs",
-        "http://douban.fm/*"
+        "http://douban.fm/*",
+        "http://www.douban.com/service/auth/*"
     ]
 }
 
