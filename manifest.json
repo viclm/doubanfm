@@ -1,7 +1,7 @@
 {
     "name": "豆瓣FM 精美版",
     "version": "1.0",
-    "description": "时尚界面，去插播广告，带播放列表",
+    "description": "时尚界面，去插播广告, 完美控制，可单曲循环，可播放上一首",
 
     "icons": {
         "16": "assets/icon16.png",
@@ -20,7 +20,7 @@
     "permissions": [
         "tabs",
         "http://douban.fm/*",
-        "http://www.douban.com/service/auth/*"
+        "http://*.douban.com/*"
     ]
 }
 

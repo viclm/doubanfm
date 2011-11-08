@@ -187,6 +187,7 @@
                 for (var i = 0, len = client.song.length ; i < len ; i += 1) {
                     if (/^\d+$/.test(client.song[i].sid)) {
                         client.song[i].picture = client.song[i].picture.replace('mpic', 'lpic');
+						client.song[i].url = 'http://otho.douban.com/view/song/small/p'+client.song[i].sid+'.mp3';
                         playList.push(client.song[i]);
                     }
                 }
