@@ -13,7 +13,7 @@
     oauth(function () {});
 
 
-    helper.addEventListener('canplaythrough', function () {canplaythrough = true;console.log('helper canplaythrough')}, false);
+    //helper.addEventListener('canplaythrough', function () {canplaythrough = true;console.log('helper canplaythrough')}, false);
 
     audio.addEventListener('loadstart', function () {
         canplaythrough = false;
@@ -23,8 +23,10 @@
     audio.addEventListener('canplaythrough', function () {
         canplaythrough = true;
         p && p.postMessage({cmd: 'canplaythrough', status: true});
-        bufferNext();
-        console.log(playList[current])
+        //bufferNext();
+        if (!playList[current + 1]) {
+            fetchSongs();
+        }
     },false);
 
     audio.addEventListener('timeupdate', function () {
@@ -37,7 +39,6 @@
 
     audio.addEventListener('ended', function () {
         if (!isRepeat) {
-            //if (h.length && h[h.length - 1].indexOf(playList[current].sid) > -1) {h.pop();}
             h.push('|' + playList[current].sid + ':p');
             current += 1;
             audio.src = playList[current].url;
@@ -64,29 +65,27 @@
                     }
                     break;
                 case 'next':
-                    if (playList[current]) {
-                        h.push('|' + playList[current].sid + ':s');
+                    h.push('|' + playList[current].sid + ':s');
 
-                        if (playList[current + 1]) {
+                    if (playList[current + 1]) {
+                        current += 1;
+                        audio.src = playList[current].url;
+                        audio.play();
+                        time = 0;
+                        port.postMessage(getCurrentSongInfo());
+                    }
+                    else {
+                        fetchSongs(function () {
                             current += 1;
                             audio.src = playList[current].url;
                             audio.play();
                             time = 0;
                             port.postMessage(getCurrentSongInfo());
-                        }
-                        else {
-                            fetchSongs(function () {
-                                current += 1;
-                                audio.src = playList[current].url;
-                                audio.play();
-                                time = 0;
-                                port.postMessage(getCurrentSongInfo());
-                            });
-                        }
+                        });
                     }
                     break;
                 case 'prev':
-                        if (current) {
+                    if (current) {
                         current -= 1;
                         audio.src = playList[current].url;
                         audio.play();
@@ -109,7 +108,7 @@
                         h.push('|' + playList[current].sid + ':u');
                         playList[current].like = '0';
                     }
-                    fetchSongs(function (){});
+                    fetchSongs();
                     h.pop();
                     break;
                 case 'trash':
@@ -191,7 +190,7 @@
                         playList.push(client.song[i]);
                     }
                 }
-                fn();
+                fn && fn();
             }
         );
     }
@@ -199,19 +198,23 @@
     function buffer() {
         canplaythrough = false;
         var i = current;
-        setTimeout(function () {
-            console.log(helper.buffered)
-        }, 30000);
+        setTimeout(function () {console.log(helper.readyState)
+            if (i === current && helper.readyState === 0) {
+                console.log('helper skip', playList);
+                playList.splice(i+1, 1);
+                bufferNext();
+            }
+        }, 10000);
     }
 
     function bufferNext() {
         if (playList[current+1]) {
-            //buffer();
+            buffer();
             helper.src = playList[current + 1].url;
         }
         else {
             fetchSongs(function () {
-                //buffer();
+                buffer();
                 helper.src = playList[1].url;
             });
         }
@@ -243,16 +246,9 @@
     };
 
     function rand() {
-        var charset = '1234567890abcdef', str = '';
-        for (var i = 0 ; i < 10 ; i += 1) {
+        var charset = '1234567890abcdef', str = '', i;
+        for (i = 0 ; i < 10 ; i += 1) {
             str += charset.charAt(Math.floor(Math.random() * 16));
         }
         return str;
     }
-
-
-    fetchSongs(function () {
-        audio.src = playList[0].url;
-    });
-
-
