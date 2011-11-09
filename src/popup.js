@@ -21,7 +21,8 @@
             artist.innerHTML = msg.artist + ' | ' + msg.albumtitle;
             progress.title = strftime(msg.time) + '/' + strftime(msg.length);
             progress.style.width = msg.time / msg.length * 275 + 'px';
-            document.body.style.backgroundImage = 'url('+ msg.picture +')';
+            player.style.backgroundImage = 'url('+ msg.picture +')';
+            channel.style.backgroundImage = 'url('+ msg.picture +')';
             soundCtr.value = msg.volume * 100;
             if (msg.like === '1') {love.className = 'on';}
             if (msg.isRepeat) {repeat.className = 'on';}
@@ -45,6 +46,9 @@
                 loading.style.display = 'block';
                 progress.style.width = 0;
             }
+            break;
+        case 'error':
+            title.innerHTML = '出错啦, 请检查网络';
             break;
         }
     });
@@ -120,64 +124,144 @@
     };
 
 
-	//channelFlush(channelList);
-	//
-	
-	channelCurrent = Number(localStorage.channel);
-	channelOrient(channelCurrent, channelList);
+    channelCurrent = Number(localStorage.channel);
+    channelOrient(channelCurrent, channelList);
 
-	delegate(channel, 'p', 'click', function () {
-		if (!this.dataset.cascade) {channelFlush(channelList)}
-		else {
-			var cascade = this.dataset.cascade.split('|'), i, len, obj;
-			obj = channelList[cascade[0]];
-			for (i = 1, len = cascade.length ; i < len ; i += 1) {
-				obj = obj.sub[cascade[i]];
-			}
-			if (obj.sub) {
-				channelFlush(obj.sub, this.dataset.cascade);
-			}
-			else {
-				var c = channel.querySelector('.active');
-				if (c) {c.className = ''}
-				channelCurrent = obj.v;
-				this.className = 'active';
-				localStorage.channel = channelCurrent;
-			}
-		}
-	});
+    delegate(channel, 'p', 'click', function () {
+        if (!this.dataset.cascade) {channelFlush(channelList)}
+        else {
+            var cascade = this.dataset.cascade.split('|'), i, len, obj;
+            obj = channelList[cascade[0]];
+            for (i = 1, len = cascade.length ; i < len ; i += 1) {
+                obj = obj.sub[cascade[i]];
+            }
+            if (obj.sub) {
+                channelFlush(obj.sub, this.dataset.cascade);
+            }
+            else {
+                var c = channel.querySelector('.active');
+                if (c) {c.className = ''}
+                channelCurrent = obj.v;
+                this.className = 'active';
+                localStorage.channel = channelCurrent;
+                port.postMessage({cmd: 'channel'});
+            }
+        }
+    });
 
-	function channelFlush(data, cascade) {
-		var i, len, html = '';
-		for (i = 0, len = data.length ; i < len ; i += 1) {
-			html += '<p data-cascade="' + (cascade ? cascade + '|' : '') + i + '"' + (data[i].v !== undefined && data[i].v === channelCurrent ? 'class="active"' : '') +'>' + data[i].t + '</p>';
-		}
-		if (cascade) {
-			html += '<p class="nav" data-cascade="' + cascade.slice(0, -2) + '">上一层</p>';
-		}
-		channel.innerHTML = html;
-	}
+    function channelFlush(data, cascade) {
+        var i, len, html = '';
+        for (i = 0, len = data.length ; i < len ; i += 1) {
+            html += '<p data-cascade="' + (cascade ? cascade + '|' : '') + i + '"' + (data[i].v !== undefined && data[i].v === channelCurrent ? 'class="active"' : '') +'>' + data[i].t + '</p>';
+        }
+        if (cascade) {
+            html += '<p class="nav" data-cascade="' + cascade.slice(0, -2) + '">上一层</p>';
+        }
+        channel.innerHTML = html;
+    }
 
-	function channelOrient(v, list, index) {
-		for (var i = 0, len = list.length ; i < len ; i += 1) {
-			if (list[i].v === v) {
-				channelFlush(list, index);
-				channel.querySelector('p:nth-child(' +(i+1)+ ')').className = 'active';
-				return index ? index + '|' + i : i;
-			}
+    function channelOrient(v, list, index) {
+        for (var i = 0, len = list.length ; i < len ; i += 1) {
+            if (list[i].v === v) {
+                channelFlush(list, index);
+                channel.querySelector('p:nth-child(' +(i+1)+ ')').className = 'active';
+                return index ? index + '|' + i : i;
+            }
 
-			if (list[i].sub) {
-				var res = channelOrient(v, list[i].sub, index ? index + '|' + i : i);
-				if (res) {
-					return res;
-				}
-			}
-		}
-		return false;
-	}
+            if (list[i].sub) {
+                var res = channelOrient(v, list[i].sub, index ? index + '|' + i : i);
+                if (res) {
+                    return res;
+                }
+            }
+        }
+        return false;
+    }
 
 
-	function delegate(node, selector, type, handler) {
+
+    function S(args) {
+
+        this.$super.constructor.call(this, args);
+
+        this.slide = document.querySelector('body > div');
+        this.btnPrev = left;
+        this.btnNext = right;
+        this.count = 2;
+        this.length = 2;
+
+        var self = this;
+
+        this.btnPrev.addEventListener('click', function (e) {
+            self.prev();
+            e.preventDefault();
+        }, false);
+
+        this.btnNext.addEventListener('click', function (e) {
+            self.next();
+            e.preventDefault();
+        }, false);
+
+        document.body.addEventListener('mouseover', function () {
+            if (self.btnPrev.dataset.visible === 'hidden') {
+                self.btnPrev.style.display = 'none';
+            }
+            else {
+                self.btnPrev.style.display = 'block';
+            }
+
+            if (self.btnNext.dataset.visible === 'hidden') {
+                self.btnNext.style.display = 'none';
+            }
+            else {
+                self.btnNext.style.display = 'block';
+            }
+        }, false);
+
+        document.body.addEventListener('mouseout', function () {
+            self.btnPrev.style.display = 'none';
+            self.btnNext.style.display = 'none';
+        }, false);
+
+        this.setNav();
+        this.btnPrev.style.display = 'none';
+        this.btnNext.style.display = 'none';
+    }
+
+    extend(S, Slideshow);
+
+    S.prototype.moveTo = function (index) {
+        var res = this.$super.moveTo.call(this, index);
+        if (res > -1) {
+            this.slide.style.left = -(res-1)*100+'%';
+            this.setNav();
+        }
+    };
+
+    S.prototype.setNav = function () {
+        if (this.count === 1) {
+            this.btnPrev.style.display = 'none';
+            this.btnPrev.dataset.visible = 'hidden';
+        }
+        else {
+            this.btnPrev.style.display = 'block';
+            this.btnPrev.dataset.visible = 'show';
+        }
+
+        if (this.count === this.length) {
+            this.btnNext.style.display = 'none';
+            this.btnNext.dataset.visible = 'hidden';
+        }
+        else {
+            this.btnNext.style.display = 'block';
+            this.btnNext.dataset.visible = 'show';
+        }
+    }
+
+    new S();
+
+
+    function delegate(node, selector, type, handler) {
         node.delegate || (node.delegate = {});
         node.delegate[selector] = {handler: handler};
         delegate.nodeList || (delegate.nodeList = []);
@@ -200,6 +284,14 @@
             }, false);
             delegate.nodeList.push(node);
         }
-    };
-	
+    }
+
+    function extend(childCtor, parentCtor) {
+        function tempCtor() {};
+        tempCtor.prototype = parentCtor.prototype;
+        childCtor.prototype = new tempCtor();
+        childCtor.prototype.$super = parentCtor.prototype;
+        childCtor.prototype.constructor = childCtor;
+    }
+
 })(this, this.document);

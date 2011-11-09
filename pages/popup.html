@@ -5,39 +5,40 @@
         <title></title>
         <link rel="stylesheet" href="popup.css" />
     </head>
-	<body>
-		<div>
-		<div id="channel">
-		</div>
-		<div id="player">
-        <header><div></div></header>
-        <section>
-            <h1>正在获取歌曲，请稍后</h1>
-            <p></p>
-        </section>
-        <footer>
-            <div class="left">
-                <a id="love" href="">love</a>
-                <a id="trash" href="">trash</a>
+    <body>
+        <div>
+            <div id="channel">
             </div>
-            <div class="middle">
-                <a id="prev" href="">prev</a>
-                <a id="play" href="">play</a>
-                <a id="next" href="">next</a>
+            <div id="player">
+                <header><div></div></header>
+                <section>
+                    <h1>正在获取歌曲，请稍后</h1>
+                    <p></p>
+                </section>
+                <footer>
+                    <div class="left">
+                        <a id="love" href="">love</a>
+                        <a id="trash" href="">trash</a>
+                    </div>
+                    <div class="middle">
+                        <a id="prev" href="">prev</a>
+                        <a id="play" href="">play</a>
+                        <a id="next" href="">next</a>
+                    </div>
+                    <div class="right">
+                        <a id="sound" href="">sound</a>
+                        <a id="repeat" href="">loop</a>
+                    </div>
+                </footer>
+                <input type="range" value="100" />
+                <div id="loading"></div>
             </div>
-            <div class="right">
-                <a id="sound" href="">sound</a>
-                <a id="repeat" href="">loop</a>
-            </div>
-        </footer>
-        <input type="range" value="100" />
-		<div id="loading"></div>
-		</div>
-		</div>
-		
-		<a id="left" href="">left</a>
-		<a id="right" href="">right</a>
-		<script type="text/javascript" src="../src/channel.js"></script>
-        <script type="text/javascript" src="../src/popup.js"></script>
+        </div>
+
+        <a id="left" href="">left</a>
+        <a id="right" href="">right</a>
+        <script type="text/javascript" src="../src/channel.js"></script>
+        <script type="text/javascript" src="../src/slideshow.js"></script>
+        <script type="text/javascript" charset="utf-8" src="../src/popup.js"></script>
     </body>
 </html>

@@ -149,6 +149,16 @@
                         });
                     }
                     break;
+                case 'channel':
+                    audio.pause();
+                    playList = playList.slice(0, current+1);
+                    fetchSongs(function () {
+                        current += 1;
+                        audio.src = playList[current].url;
+                        if (isPlay) {audio.play();}
+                        port.postMessage(getCurrentSongInfo());
+                    });
+                    break;
                 }
             });
 
@@ -173,16 +183,17 @@
         info.isRepeat = isRepeat;
         info.volume = audio.volume;
         info.canplaythrough = canplaythrough;
-		//info.channel = Number(localstorage.channel);
         return info;
     }
 
     function fetchSongs(fn) {
         h = h.slice(-20);
+        var r = rand();
+        var channel = localStorage.channel;
         ajax(
             'get',
             'http://douban.fm/j/mine/playlist',
-            h.length ? 'type=s&sid='+ h[h.length - 1].slice(1, -2) +'&h='+ h.join('') +'&channel=0&from=mainsite&r='+rand() : 'type=n&h=&channel=0&from=mainsite&r='+rand(),
+            h.length ? 'type=s&sid='+ h[h.length - 1].slice(1, -2) +'&h='+ h.join('') +'&channel='+channel+'&from=mainsite&r='+r : 'type=n&h=&channel='+channel+'&from=mainsite&r='+r,
             10000,
             function (client) {
                 client = JSON.parse(client.responseText);
@@ -194,6 +205,9 @@
                     }
                 }
                 fn && fn();
+            },
+            function (client) {
+                if (p) {p.postMessage({cmd: 'error'})}
             }
         );
     }
@@ -237,7 +251,7 @@
             if (!isTimeout && ((client.status >= 200 && client.status < 300) || client.status == 304)) {
                 success(client);
             }
-            else {console.log(client)
+            else {
                 error(client);
             }
         };
