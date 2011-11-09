@@ -12,6 +12,8 @@
 
     oauth(function () {});
 
+	localStorage.channel || (localStorage.channel = '0');
+
 
     //helper.addEventListener('canplaythrough', function () {canplaythrough = true;console.log('helper canplaythrough')}, false);
 
@@ -171,6 +173,7 @@
         info.isRepeat = isRepeat;
         info.volume = audio.volume;
         info.canplaythrough = canplaythrough;
+		//info.channel = Number(localstorage.channel);
         return info;
     }
 

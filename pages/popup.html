@@ -5,7 +5,11 @@
         <title></title>
         <link rel="stylesheet" href="popup.css" />
     </head>
-    <body>
+	<body>
+		<div>
+		<div id="channel">
+		</div>
+		<div id="player">
         <header><div></div></header>
         <section>
             <h1>正在获取歌曲，请稍后</h1>
@@ -27,7 +31,13 @@
             </div>
         </footer>
         <input type="range" value="100" />
-        <div id="loading"></div>
+		<div id="loading"></div>
+		</div>
+		</div>
+		
+		<a id="left" href="">left</a>
+		<a id="right" href="">right</a>
+		<script type="text/javascript" src="../src/channel.js"></script>
         <script type="text/javascript" src="../src/popup.js"></script>
     </body>
 </html>

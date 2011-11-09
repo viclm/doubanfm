@@ -2,10 +2,11 @@
     var isPlay = false;
     var timer = null;
     var port = chrome.extension.connect({name: 'fm'});
-    var title = document.querySelector('h1');
-    var artist = document.querySelector('p');
-    var progress = document.querySelector('header div');
-    var soundCtr = document.querySelector('input[type=range]')
+    var title = player.querySelector('h1');
+    var artist = player.querySelector('p');
+    var progress = player.querySelector('header div');
+    var soundCtr = player.querySelector('input[type=range]');
+	var channelCurrent = 0;
 
     port.postMessage({cmd: 'get'});
 
@@ -117,4 +118,88 @@
         str = (minutes > 9 ? minutes : '0' + minutes) + ':' + (seconds > 9 ? seconds : '0' + seconds);
         return str;
     };
+
+
+	//channelFlush(channelList);
+	//
+	
+	channelCurrent = Number(localStorage.channel);
+	channelOrient(channelCurrent, channelList);
+
+	delegate(channel, 'p', 'click', function () {
+		if (!this.dataset.cascade) {channelFlush(channelList)}
+		else {
+			var cascade = this.dataset.cascade.split('|'), i, len, obj;
+			obj = channelList[cascade[0]];
+			for (i = 1, len = cascade.length ; i < len ; i += 1) {
+				obj = obj.sub[cascade[i]];
+			}
+			if (obj.sub) {
+				channelFlush(obj.sub, this.dataset.cascade);
+			}
+			else {
+				var c = channel.querySelector('.active');
+				if (c) {c.className = ''}
+				channelCurrent = obj.v;
+				this.className = 'active';
+				localStorage.channel = channelCurrent;
+			}
+		}
+	});
+
+	function channelFlush(data, cascade) {
+		var i, len, html = '';
+		for (i = 0, len = data.length ; i < len ; i += 1) {
+			html += '<p data-cascade="' + (cascade ? cascade + '|' : '') + i + '"' + (data[i].v !== undefined && data[i].v === channelCurrent ? 'class="active"' : '') +'>' + data[i].t + '</p>';
+		}
+		if (cascade) {
+			html += '<p class="nav" data-cascade="' + cascade.slice(0, -2) + '">上一层</p>';
+		}
+		channel.innerHTML = html;
+	}
+
+	function channelOrient(v, list, index) {
+		for (var i = 0, len = list.length ; i < len ; i += 1) {
+			if (list[i].v === v) {
+				channelFlush(list, index);
+				channel.querySelector('p:nth-child(' +(i+1)+ ')').className = 'active';
+				return index ? index + '|' + i : i;
+			}
+
+			if (list[i].sub) {
+				var res = channelOrient(v, list[i].sub, index ? index + '|' + i : i);
+				if (res) {
+					return res;
+				}
+			}
+		}
+		return false;
+	}
+
+
+	function delegate(node, selector, type, handler) {
+        node.delegate || (node.delegate = {});
+        node.delegate[selector] = {handler: handler};
+        delegate.nodeList || (delegate.nodeList = []);
+        if (delegate.nodeList.indexOf(node) === -1) {
+            node.addEventListener(type, function (e) {
+                var target = e.target, key, tmp;
+                do {
+                    for (key in node.delegate) {
+                        tmp = node.delegate[key];
+                        if (Array.prototype.indexOf.call(node.querySelectorAll(key), target) > -1) {
+                            delete e.target;
+                            e.target = target;
+                            tmp.handler.call(target, e);
+                            return;
+                        }
+                    }
+                    target = target.parentNode;
+                }
+                while (target && target !== this);
+            }, false);
+            delegate.nodeList.push(node);
+        }
+    };
+	
 })(this, this.document);
