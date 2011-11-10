@@ -126,8 +126,6 @@ input[type=range]::-webkit-slider-thumb {
     background-color: #139fd0;
 }
 
-
-
 #loading {
     background: url(../assets/loading.gif) 125px 125px no-repeat;
     width: 100%;
@@ -138,6 +136,15 @@ input[type=range]::-webkit-slider-thumb {
     background-color: rgba(255, 255, 255, 0.75);
     z-index: -1;
     display: none;
+}
+
+#msg {
+    position: absolute;
+    right: 0;
+    bottom: 45px;
+	padding: 0 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+	display: none;
 }
 
 #channel p {

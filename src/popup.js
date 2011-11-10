@@ -8,6 +8,88 @@
     var soundCtr = player.querySelector('input[type=range]');
 	var channelCurrent = 0;
 
+
+    function S(args) {
+
+        this.$super.constructor.call(this, args);
+
+        this.slide = document.querySelector('body > div');
+        this.btnPrev = left;
+        this.btnNext = right;
+        this.count = 2;
+        this.length = 2;
+
+        var self = this;
+
+        this.btnPrev.addEventListener('click', function (e) {
+            self.prev();
+            e.preventDefault();
+        }, false);
+
+        this.btnNext.addEventListener('click', function (e) {
+            self.next();
+            e.preventDefault();
+        }, false);
+
+        document.body.addEventListener('mouseover', function () {
+            if (self.btnPrev.dataset.visible === 'hidden') {
+                self.btnPrev.style.display = 'none';
+            }
+            else {
+                self.btnPrev.style.display = 'block';
+            }
+
+            if (self.btnNext.dataset.visible === 'hidden') {
+                self.btnNext.style.display = 'none';
+            }
+            else {
+                self.btnNext.style.display = 'block';
+            }
+        }, false);
+
+        document.body.addEventListener('mouseout', function () {
+            self.btnPrev.style.display = 'none';
+            self.btnNext.style.display = 'none';
+        }, false);
+
+        this.setNav();
+        this.btnPrev.style.display = 'none';
+        this.btnNext.style.display = 'none';
+    }
+
+    extend(S, Slideshow);
+
+    S.prototype.moveTo = function (index) {
+        var res = this.$super.moveTo.call(this, index);
+        if (res > -1) {
+            this.slide.style.left = -(res-1)*100+'%';
+            this.setNav();
+        }
+    };
+
+    S.prototype.setNav = function () {
+        if (this.count === 1) {
+            this.btnPrev.style.display = 'none';
+            this.btnPrev.dataset.visible = 'hidden';
+        }
+        else {
+            this.btnPrev.style.display = 'block';
+            this.btnPrev.dataset.visible = 'show';
+        }
+
+        if (this.count === this.length) {
+            this.btnNext.style.display = 'none';
+            this.btnNext.dataset.visible = 'hidden';
+        }
+        else {
+            this.btnNext.style.display = 'block';
+            this.btnNext.dataset.visible = 'show';
+        }
+    }
+
+    var slideshow = new S();
+
+
     port.postMessage({cmd: 'get'});
 
     port.onMessage.addListener(function (msg) {
@@ -125,7 +207,7 @@
 
 
     channelCurrent = Number(localStorage.channel);
-    channelOrient(channelCurrent, channelList);
+	channelOrient(channelCurrent, channelList);
 
     delegate(channel, 'p', 'click', function () {
         if (!this.dataset.cascade) {channelFlush(channelList)}
@@ -145,26 +227,55 @@
                 this.className = 'active';
                 localStorage.channel = channelCurrent;
                 port.postMessage({cmd: 'channel'});
+				slideshow.next();
+				msg.innerHTML = '切换至 ' + obj.t;
+				msg.style.display = 'block';
+				setTimeout(function () {
+					msg.style.display = 'none';
+				}, 5000);
             }
         }
     });
 
     function channelFlush(data, cascade) {
-        var i, len, html = '';
+        var i, len, html = '', p;
+		channel.innerHTML = '';
         for (i = 0, len = data.length ; i < len ; i += 1) {
-            html += '<p data-cascade="' + (cascade ? cascade + '|' : '') + i + '"' + (data[i].v !== undefined && data[i].v === channelCurrent ? 'class="active"' : '') +'>' + data[i].t + '</p>';
+			p = document.createElement('p');
+			p.dataset.cascade = cascade ? cascade + '|' + i : i;
+			if (data[i].v !== undefined && data[i].v === channelCurrent) {p.className = 'active';}
+			p.innerHTML = data[i].t;
+			(function () {
+				var pp = p;
+				setTimeout(function () {
+					channel.appendChild(pp);
+				}, i*100);
+			})();
+            //html += '<p data-cascade="' + (cascade ? cascade + '|' : '') + i + '"' + (data[i].v !== undefined && data[i].v === channelCurrent ? 'class="active"' : '') +'>' + data[i].t + '</p>';
         }
         if (cascade) {
-            html += '<p class="nav" data-cascade="' + cascade.slice(0, -2) + '">上一层</p>';
+			p = document.createElement('p');
+			p.dataset.cascade = cascade.slice(0, -2);
+			p.className = 'nav';
+			p.innerHTML = '上一层';
+			(function () {
+				var pp = p;
+				setTimeout(function () {
+					channel.appendChild(pp);
+				}, i*100);
+			})();
+            //html += '<p class="nav" data-cascade="' + cascade.slice(0, -2) + '">上一层</p>';
         }
-        channel.innerHTML = html;
+        //channel.innerHTML = html;
     }
 
     function channelOrient(v, list, index) {
         for (var i = 0, len = list.length ; i < len ; i += 1) {
             if (list[i].v === v) {
                 channelFlush(list, index);
-                channel.querySelector('p:nth-child(' +(i+1)+ ')').className = 'active';
+				setTimeout(function () {
+					//channel.querySelector('p:nth-child(' +(i+1)+ ')').className = 'active';
+				}, 1000);
                 return index ? index + '|' + i : i;
             }
 
@@ -178,87 +289,6 @@
         return false;
     }
 
-
-
-    function S(args) {
-
-        this.$super.constructor.call(this, args);
-
-        this.slide = document.querySelector('body > div');
-        this.btnPrev = left;
-        this.btnNext = right;
-        this.count = 2;
-        this.length = 2;
-
-        var self = this;
-
-        this.btnPrev.addEventListener('click', function (e) {
-            self.prev();
-            e.preventDefault();
-        }, false);
-
-        this.btnNext.addEventListener('click', function (e) {
-            self.next();
-            e.preventDefault();
-        }, false);
-
-        document.body.addEventListener('mouseover', function () {
-            if (self.btnPrev.dataset.visible === 'hidden') {
-                self.btnPrev.style.display = 'none';
-            }
-            else {
-                self.btnPrev.style.display = 'block';
-            }
-
-            if (self.btnNext.dataset.visible === 'hidden') {
-                self.btnNext.style.display = 'none';
-            }
-            else {
-                self.btnNext.style.display = 'block';
-            }
-        }, false);
-
-        document.body.addEventListener('mouseout', function () {
-            self.btnPrev.style.display = 'none';
-            self.btnNext.style.display = 'none';
-        }, false);
-
-        this.setNav();
-        this.btnPrev.style.display = 'none';
-        this.btnNext.style.display = 'none';
-    }
-
-    extend(S, Slideshow);
-
-    S.prototype.moveTo = function (index) {
-        var res = this.$super.moveTo.call(this, index);
-        if (res > -1) {
-            this.slide.style.left = -(res-1)*100+'%';
-            this.setNav();
-        }
-    };
-
-    S.prototype.setNav = function () {
-        if (this.count === 1) {
-            this.btnPrev.style.display = 'none';
-            this.btnPrev.dataset.visible = 'hidden';
-        }
-        else {
-            this.btnPrev.style.display = 'block';
-            this.btnPrev.dataset.visible = 'show';
-        }
-
-        if (this.count === this.length) {
-            this.btnNext.style.display = 'none';
-            this.btnNext.dataset.visible = 'hidden';
-        }
-        else {
-            this.btnNext.style.display = 'block';
-            this.btnNext.dataset.visible = 'show';
-        }
-    }
-
-    new S();
 
 
     function delegate(node, selector, type, handler) {
