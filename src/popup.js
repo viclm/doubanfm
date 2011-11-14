@@ -101,12 +101,14 @@
         case 'set':
             title.innerHTML = msg.title;
             artist.innerHTML = msg.artist + ' | ' + msg.albumtitle;
+			doubanlink.href = msg.album;
             progress.title = strftime(msg.time) + '/' + strftime(msg.length);
             progress.style.width = msg.time / msg.length * 275 + 'px';
             player.style.backgroundImage = 'url('+ msg.picture +')';
             channel.style.backgroundImage = 'url('+ msg.picture +')';
             soundCtr.value = msg.volume * 100;
             if (msg.like === '1') {love.className = 'on';}
+			else {love.className = '';}
             if (msg.isRepeat) {repeat.className = 'on';}
             isPlay = msg.isPlay;
             if (isPlay) {
@@ -245,10 +247,11 @@
 			p.dataset.cascade = cascade ? cascade + '|' + i : i;
 			if (data[i].v !== undefined && data[i].v === channelCurrent) {p.className = 'active';}
 			p.innerHTML = data[i].t;
+			channel.appendChild(p);
 			(function () {
 				var pp = p;
 				setTimeout(function () {
-					channel.appendChild(pp);
+					pp.style.opacity = 1;
 				}, i*100);
 			})();
             //html += '<p data-cascade="' + (cascade ? cascade + '|' : '') + i + '"' + (data[i].v !== undefined && data[i].v === channelCurrent ? 'class="active"' : '') +'>' + data[i].t + '</p>';
@@ -258,10 +261,11 @@
 			p.dataset.cascade = cascade.slice(0, -2);
 			p.className = 'nav';
 			p.innerHTML = '上一层';
+			channel.appendChild(p);
 			(function () {
 				var pp = p;
 				setTimeout(function () {
-					channel.appendChild(pp);
+					pp.style.opacity = 1;
 				}, i*100);
 			})();
             //html += '<p class="nav" data-cascade="' + cascade.slice(0, -2) + '">上一层</p>';

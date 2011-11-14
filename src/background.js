@@ -9,13 +9,12 @@
     var time = 0;
     var canplaythrough = false;
     var p = null;
+	var likedSongs = [];
 
     oauth(function () {});
 
 	localStorage.channel || (localStorage.channel = '0');
 
-
-    //helper.addEventListener('canplaythrough', function () {canplaythrough = true;console.log('helper canplaythrough')}, false);
 
     audio.addEventListener('loadstart', function () {
         canplaythrough = false;
@@ -25,7 +24,6 @@
     audio.addEventListener('canplaythrough', function () {
         canplaythrough = true;
         p && p.postMessage({cmd: 'canplaythrough', status: true});
-        //bufferNext();
         if (!playList[current + 1]) {
             fetchSongs();
         }
@@ -41,7 +39,7 @@
 
     audio.addEventListener('ended', function () {
         if (!isRepeat) {
-            h.push('|' + playList[current].sid + ':p');
+            if (localStorage.channel !== '-1') {h.push('|' + playList[current].sid + ':p');}
             current += 1;
             audio.src = playList[current].url;
         }
@@ -67,7 +65,7 @@
                     }
                     break;
                 case 'next':
-                    h.push('|' + playList[current].sid + ':s');
+					if (localStorage.channel !== '-1') {h.push('|' + playList[current].sid + ':s');}
 
                     if (playList[current + 1]) {
                         current += 1;
@@ -115,11 +113,10 @@
                     break;
                 case 'trash':
                     h.push('|' + playList[current].sid + ':b');
-                    fetchSongs(function (){});
+                    fetchSongs();
                     h.pop();
                     playList.splice(current, 1);
 
-                    //current += 1;
                     if (playList[current]) {
                         audio.src = playList[current].url;
                         audio.play();
@@ -174,6 +171,7 @@
         var song = playList[current], info = {cmd: 'set'};
         info.title = song.title;
         info.artist = song.artist;
+        info.album = song.album;
         info.albumtitle = song.albumtitle;
         info.picture = song.picture;
         info.like = song.like;
@@ -187,9 +185,13 @@
     }
 
     function fetchSongs(fn) {
-        h = h.slice(-20);
-        var r = rand();
         var channel = localStorage.channel;
+		if (channel === '-1') {
+			likedFm(fn);
+		}
+		else {
+        var r = rand();
+        h = h.slice(-20);
         ajax(
             'get',
             'http://douban.fm/j/mine/playlist',
@@ -201,6 +203,7 @@
                     if (/^\d+$/.test(client.song[i].sid)) {
                         client.song[i].picture = client.song[i].picture.replace('mpic', 'lpic');
 						client.song[i].url = 'http://otho.douban.com/view/song/small/p'+client.song[i].sid+'.mp3';
+						client.song[i].album = 'http://music.douban.com'+client.song[i].album;
                         playList.push(client.song[i]);
                     }
                 }
@@ -210,32 +213,66 @@
                 if (p) {p.postMessage({cmd: 'error'})}
             }
         );
+		}
     }
 
-    function buffer() {
-        canplaythrough = false;
-        var i = current;
-        setTimeout(function () {console.log(helper.readyState)
-            if (i === current && helper.readyState === 0) {
-                console.log('helper skip', playList);
-                playList.splice(i+1, 1);
-                bufferNext();
-            }
-        }, 10000);
-    }
+	function likedFm(fn) {
+		if (likedSongs.length) {
+			for (var i = 0, len = likedSongs.length < 5 ? likedSongs.length : 5, song ; i < len ; i += 1) {
+				playList.push(likedSongs[Math.floor(Math.random() * likedSongs.length)]);
+			}
+			fn && fn();
+		}
+		else {
+			fetchLikedSongs(function () {
+				for (var i = 0, len = likedSongs.length < 5 ? likedSongs.length : 5, song ; i < len ; i += 1) {
+					playList.push(likedSongs[Math.floor(Math.random() * likedSongs.length)]);
+				}
+				fn && fn();
+			});
+		}
+	}
 
-    function bufferNext() {
-        if (playList[current+1]) {
-            buffer();
-            helper.src = playList[current + 1].url;
-        }
-        else {
-            fetchSongs(function () {
-                buffer();
-                helper.src = playList[1].url;
-            });
-        }
-    }
+	function fetchLikedSongs(fn) {
+		var index = 0;
+		fetch(0)
+		function fetch(index) {
+			ajax(
+				'get',
+				'http://douban.fm/mine',
+				'type=liked&start=' + index,
+				10000,
+				function (client) {
+					likedSongsParser.innerHTML = client.responseText.match(/(<div id="record_viewer">[\s\S]+)<div class="paginator">/m)[1].replace(/onload="reset_icon_size\(this\);"/gm, '');
+					var songs = likedSongsParser.querySelectorAll('.info_wrapper');
+					for (var i = 0, len = songs.length, song ; i < len ; i += 1) {
+						song = songs[i];
+						var item = {};
+						item.album = song.querySelector('a').href;
+						item.picture = song.querySelector('img').src.replace('spic', 'lpic');
+						item.title = song.querySelector('.song_title').innerHTML;
+						item.artist = song.querySelector('.performer').innerHTML;
+						item.albumtitle = song.querySelector('.source a').innerHTML;
+						item.sid = song.querySelector('.action').getAttribute('sid');
+						item.url = 'http://otho.douban.com/view/song/small/p'+item.sid+'.mp3';
+						item.like = '1';
+						likedSongs.push(item);
+					}
+					likedSongsParser.innerHTML = '';
+					if (index === 0 && fn) {fn();}
+					if (len === 15) {
+						setTimeout(function () {
+							index += 15;
+							fetch(index);
+						}, 1000);
+					}
+				},
+				function (client) {
+					if (p) {p.postMessage({cmd: 'error'})}
+				}
+			);
+		}
+	}
 
     function ajax(method, url, data, timeout, success, error) {
         var client = new XMLHttpRequest(), data, isTimeout = false, self = this;
