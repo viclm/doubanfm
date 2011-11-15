@@ -93,6 +93,13 @@
                     }
                     port.postMessage(getCurrentSongInfo());
                     break;
+                case 'index':
+                    current = msg.index;
+                    audio.src = playList[current].url;
+                    audio.play();
+                    time = 0;
+                    port.postMessage(getCurrentSongInfo());
+                    break;
                 case 'volume':
                     audio.volume = msg.value / 100;
                     break;
@@ -181,6 +188,8 @@
         info.isRepeat = isRepeat;
         info.volume = audio.volume;
         info.canplaythrough = canplaythrough;
+		info.current = current;
+		info.list = playList;
         return info;
     }
 

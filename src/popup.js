@@ -17,7 +17,7 @@
         this.btnPrev = left;
         this.btnNext = right;
         this.count = 2;
-        this.length = 2;
+        this.length = 3;
 
         var self = this;
 
@@ -106,10 +106,12 @@
             progress.style.width = msg.time / msg.length * 275 + 'px';
             player.style.backgroundImage = 'url('+ msg.picture +')';
             channel.style.backgroundImage = 'url('+ msg.picture +')';
+            list.style.backgroundImage = 'url('+ msg.picture +')';
             soundCtr.value = msg.volume * 100;
             if (msg.like === '1') {love.className = 'on';}
 			else {love.className = '';}
             if (msg.isRepeat) {repeat.className = 'on';}
+			else {repeat.className = '';}
             isPlay = msg.isPlay;
             if (isPlay) {
                 play.style.backgroundImage = 'url(../assets/pause.png)';
@@ -121,6 +123,8 @@
             if (!msg.canplaythrough){
                 loading.style.display = 'block';
             }
+
+			listFlush(msg.list, Number(msg.current));
             break;
         case 'canplaythrough':
             if (msg.status) {
@@ -291,6 +295,35 @@
             }
         }
         return false;
+    }
+
+	delegate(list, 'p', 'click', function () {
+        if (this.className !== 'active') {
+            port.postMessage({cmd: 'index', index: Number(this.dataset.index)});
+        }
+    });
+
+
+	function listFlush(playList, current) {
+        var i = current - 5 < 0 ? 0 : current - 5,
+			len = current + 6 > playList.length ? playList.length : current + 6,
+			p,
+			j = 0;
+		list.innerHTML = '';
+        for (; i < len ; i += 1) {
+			p = document.createElement('p');
+			p.dataset.index = i;
+			if (current === i) {p.className = 'active';}
+			p.innerHTML = playList[i].title + ' - ' + playList[i].artist;
+			list.appendChild(p);
+			j++;
+			(function () {
+				var pp = p;
+				setTimeout(function () {
+					pp.style.opacity = 1;
+				}, j*100);
+			})();
+        }
     }
 
 
