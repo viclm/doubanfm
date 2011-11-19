@@ -7,6 +7,7 @@
     var progress = player.querySelector('header div');
     var soundCtr = player.querySelector('input[type=range]');
 	var channelCurrent = 0;
+    var channelTo;
 
 
     function S(args) {
@@ -135,6 +136,22 @@
                 progress.style.width = 0;
             }
             break;
+        case 'oauth_result':
+            if (msg.status) {
+                var c = channel.querySelector('.active');
+                    if (c) {c.className = ''}
+                    channelCurrent = channelTo.v;
+                    this.className = 'active';
+                    localStorage.channel = channelCurrent;
+                    port.postMessage({cmd: 'channel', original: 1});
+                    slideshow.next();
+                    msg.innerHTML = '切换至 ' + channelTo.t;
+                    msg.style.display = 'block';
+                    setTimeout(function () {
+                        msg.style.display = 'none';
+                    }, 5000);
+            }
+            break;
         case 'error':
             title.innerHTML = '出错啦, 请检查网络';
             break;
@@ -227,51 +244,70 @@
                 channelFlush(obj.sub, this.dataset.cascade);
             }
             else {
-                var c = channel.querySelector('.active');
-                if (c) {c.className = ''}
-                channelCurrent = obj.v;
-                this.className = 'active';
-                localStorage.channel = channelCurrent;
-                port.postMessage({cmd: 'channel'});
-				slideshow.next();
-				msg.innerHTML = '切换至 ' + obj.t;
-				msg.style.display = 'block';
-				setTimeout(function () {
-					msg.style.display = 'none';
-				}, 5000);
+                if ((obj.v === -1 || obj.v === 0) && !(localStorage.getItem('access_token') && localStorage.getItem('access_token_secret')
+			&& localStorage.getItem('consumer_key') && localStorage.getItem('consumer_key_secret')
+			&& localStorage.getItem('signature_method'))) {
+                    oauth.style.top = 0;
+                    channelTo = obj;
+                }
+                else {
+                    var c = channel.querySelector('.active');
+                    if (c) {c.className = ''}
+                    channelCurrent = obj.v;
+                    this.className = 'active';
+                    localStorage.channel = channelCurrent;
+                    port.postMessage({cmd: 'channel', original: 1});
+                    slideshow.next();
+                    msg.innerHTML = '切换至 ' + obj.t;
+                    msg.style.display = 'block';
+                    setTimeout(function () {
+                        msg.style.display = 'none';
+                    }, 5000);
+                }
             }
         }
     });
 
+    oauth.querySelector('a').addEventListener('click', function (e) {
+        port.postMessage({cmd: 'oauth', channel: channelTo.v});
+        oauth.style.top = '100%';
+        e.preventDefault();
+    }, false);
+
+    oauth.querySelectorAll('a')[1].addEventListener('click', function (e) {
+        oauth.style.top = '100%';
+        e.preventDefault();
+    }, false);
+
     function channelFlush(data, cascade) {
         var i, len, html = '', p;
-		channel.innerHTML = '';
+        channel.innerHTML = '';
         for (i = 0, len = data.length ; i < len ; i += 1) {
-			p = document.createElement('p');
-			p.dataset.cascade = cascade ? cascade + '|' + i : i;
-			if (data[i].v !== undefined && data[i].v === channelCurrent) {p.className = 'active';}
-			p.innerHTML = data[i].t;
-			channel.appendChild(p);
-			(function () {
-				var pp = p;
-				setTimeout(function () {
-					pp.style.opacity = 1;
-				}, i*100);
-			})();
+            p = document.createElement('p');
+            p.dataset.cascade = cascade ? cascade + '|' + i : i;
+            if (data[i].v !== undefined && data[i].v === channelCurrent) {p.className = 'active';}
+            p.innerHTML = data[i].t;
+            channel.appendChild(p);
+            (function () {
+                var pp = p;
+                setTimeout(function () {
+                    pp.style.opacity = 1;
+                }, i*100);
+            })();
             //html += '<p data-cascade="' + (cascade ? cascade + '|' : '') + i + '"' + (data[i].v !== undefined && data[i].v === channelCurrent ? 'class="active"' : '') +'>' + data[i].t + '</p>';
         }
         if (cascade) {
-			p = document.createElement('p');
-			p.dataset.cascade = cascade.slice(0, -2);
-			p.className = 'nav';
-			p.innerHTML = '上一层';
-			channel.appendChild(p);
-			(function () {
-				var pp = p;
-				setTimeout(function () {
-					pp.style.opacity = 1;
-				}, i*100);
-			})();
+            p = document.createElement('p');
+            p.dataset.cascade = cascade.slice(0, -2);
+            p.className = 'nav';
+            p.innerHTML = '上一层';
+            channel.appendChild(p);
+            (function () {
+                var pp = p;
+                setTimeout(function () {
+                    pp.style.opacity = 1;
+                }, i*100);
+            })();
             //html += '<p class="nav" data-cascade="' + cascade.slice(0, -2) + '">上一层</p>';
         }
         //channel.innerHTML = html;
@@ -281,9 +317,9 @@
         for (var i = 0, len = list.length ; i < len ; i += 1) {
             if (list[i].v === v) {
                 channelFlush(list, index);
-				setTimeout(function () {
-					//channel.querySelector('p:nth-child(' +(i+1)+ ')').className = 'active';
-				}, 1000);
+                setTimeout(function () {
+                    //channel.querySelector('p:nth-child(' +(i+1)+ ')').className = 'active';
+                }, 1000);
                 return index ? index + '|' + i : i;
             }
 

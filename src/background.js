@@ -1,6 +1,5 @@
 
     var audio = document.querySelector('audio');
-    var helper = document.querySelector('#helper');
     var isPlay = false;
     var isRepeat = false;
     var playList = [];
@@ -11,9 +10,7 @@
     var p = null;
 	var likedSongs = [];
 
-    oauth(function () {});
-
-	localStorage.channel || (localStorage.channel = '0');
+	localStorage.channel || (localStorage.channel = '1');
 
 
     audio.addEventListener('loadstart', function () {
@@ -70,7 +67,7 @@
                     if (playList[current + 1]) {
                         current += 1;
                         audio.src = playList[current].url;
-                        audio.play();
+                        if (isPlay) {audio.play();}
                         time = 0;
                         port.postMessage(getCurrentSongInfo());
                     }
@@ -78,7 +75,7 @@
                         fetchSongs(function () {
                             current += 1;
                             audio.src = playList[current].url;
-                            audio.play();
+                            if (isPlay) {audio.play();}
                             time = 0;
                             port.postMessage(getCurrentSongInfo());
                         });
@@ -88,7 +85,7 @@
                     if (current) {
                         current -= 1;
                         audio.src = playList[current].url;
-                        audio.play();
+                        if (isPlay) {audio.play();}
                         time = 0;
                     }
                     port.postMessage(getCurrentSongInfo());
@@ -96,7 +93,7 @@
                 case 'index':
                     current = msg.index;
                     audio.src = playList[current].url;
-                    audio.play();
+                    if (isPlay) {audio.play();}
                     time = 0;
                     port.postMessage(getCurrentSongInfo());
                     break;
@@ -154,13 +151,30 @@
                     }
                     break;
                 case 'channel':
-                    audio.pause();
                     playList = playList.slice(0, current+1);
                     fetchSongs(function () {
                         current += 1;
                         audio.src = playList[current].url;
                         if (isPlay) {audio.play();}
                         port.postMessage(getCurrentSongInfo());
+                    });
+                    break;
+                case 'oauth':
+                    oauth(function () {
+                        if (p) {
+                            port.postMessage({cmd: 'oauth_result', status: true});
+                        }
+                        else {
+                            localStorage.channel = msg.channel;
+                            playList = playList.slice(0, current+1);
+                            fetchSongs(function () {
+                                current += 1;
+                                audio.src = playList[current].url;
+                                if (isPlay) {audio.play();}
+                            });
+                        }
+                    }, function () {
+                        //port.postMessage({cmd: 'oauth_result', status: false});
                     });
                     break;
                 }

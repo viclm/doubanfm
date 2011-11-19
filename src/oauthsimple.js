@@ -1,7 +1,7 @@
 var oauth = (function () {
     'use strict';
     var api_key, api_key_secret, request_token, request_token_secret, access_token, access_token_secret, signature_method,
-    request_token_uri, authorization_uri, access_token_uri, resources_uri, tab;
+    request_token_uri, authorization_uri, access_token_uri, resources_uri, tab, closedByProgram = false;
 
     api_key = '0e273c904923a84d2a75b5b0db6af8e7';
     api_key_secret = '4ccb5cc1d3f727d9',
@@ -97,7 +97,7 @@ var oauth = (function () {
         xhr.send(null);
     }
 
-    function main(callback) {
+    function main(callback, err) {
         callback = callback || function () {};
         if (localStorage.getItem('access_token') && localStorage.getItem('access_token_secret')
 			&& localStorage.getItem('consumer_key') && localStorage.getItem('consumer_key_secret')
@@ -106,24 +106,32 @@ var oauth = (function () {
         }
         else {
             getRequestToken(function () {
-                chrome.tabs.create({
-                    url: getUserAuthorizationURL()
+                chrome.windows.create({
+                    url: getUserAuthorizationURL(),
+                    type: 'popup'
                 }, function (t) {
                     tab = t;
                 });
-            });
+            }, err);
 
             chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
                 if (request.greeting == "hello") {
-                    chrome.tabs.remove(tab.id);
+                    closedByProgram = true;
+                    chrome.windows.remove(tab.id);
                     getAccessToken(function () {
                         localStorage.setItem('consumer_key', api_key);
                         localStorage.setItem('consumer_key_secret', api_key_secret);
+                        localStorage.setItem('signature_method', signature_method);
                         localStorage.setItem('access_token', access_token);
                         localStorage.setItem('access_token_secret', access_token_secret);
-                        localStorage.setItem('signature_method', signature_method);
                         callback();
-                    });
+                    }, err);
+                }
+            });
+
+            chrome.windows.onRemoved.addListener(function(windowId) {
+                if (!closedByProgram) {
+                    err();
                 }
             });
         }
