@@ -53,11 +53,13 @@
                 case 'switch':
                     isPlay = msg.isPlay;
                     if (msg.isPlay) {
+                        chrome.browserAction.setIcon({path: '../assets/icon16_pause.png'});
                         if (playList.length) {
                             audio.play();
                         }
                     }
                     else {
+                        chrome.browserAction.setIcon({path: '../assets/icon16_play.png'});
                         audio.pause();
                     }
                     break;

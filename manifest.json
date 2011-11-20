@@ -1,17 +1,17 @@
 {
     "name": "豆瓣FM 精美版",
-    "version": "4.1",
+    "version": "4.1.1",
     "description": "豆瓣电台, 时尚界面，去插播广告, 完美控制，可单曲循环，可播放上一首，带播放列表",
 
     "icons": {
-        "16": "assets/icon16.png",
+        "16": "assets/icon16_play.png",
         "48": "assets/icon48.png",
         "128": "assets/icon128.png"
     },
 
     "browser_action": {
         "default_title": "豆瓣FM 精美版",
-        "default_icon": "assets/icon16.png",
+        "default_icon": "assets/icon16_play.png",
         "default_popup": "pages/popup.html"
     },
 
