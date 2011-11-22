@@ -125,6 +125,8 @@
                 loading.style.display = 'block';
             }
 
+            channelCurrent = Number(localStorage.channel);
+            channelOrient(channelCurrent, channelList);
             listFlush(msg.list, Number(msg.current));
             break;
         case 'canplaythrough':
@@ -217,8 +219,6 @@
     };
 
 
-    channelCurrent = Number(localStorage.channel);
-    channelOrient(channelCurrent, channelList);
 
     delegate(channel, 'p', 'click', function () {
         if (!this.dataset.cascade) {channelFlush(channelList)}
@@ -321,9 +321,6 @@
         for (var i = 0, len = list.length ; i < len ; i += 1) {
             if (list[i].v === v) {
                 channelFlush(list, index);
-                setTimeout(function () {
-                    //channel.querySelector('p:nth-child(' +(i+1)+ ')').className = 'active';
-                }, 1000);
                 return index ? index + '|' + i : i;
             }
 
