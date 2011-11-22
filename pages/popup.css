@@ -4,12 +4,12 @@ body {
     height: 275px;
     margin: 0;
     color: white;
-	overflow: hidden;
+    overflow: hidden;
 }
 
 body > div {
-	width: 300%;
-	position: absolute;
+    width: 300%;
+    position: absolute;
     -webkit-transition: left .5s;
     left: -100%;
 }
@@ -18,10 +18,10 @@ body > div > div {
     background-size: 275px 275px;
     background-image: none;
     background-color: #eee;
-	height: 275px;
-	width: 275px;
-	position: relative;
-	float: left;
+    height: 275px;
+    width: 275px;
+    position: relative;
+    float: left;
 }
 
 header, footer, section {
@@ -58,9 +58,9 @@ a {
 }
 
 #doubanlink {
-	display: block;
-	width: 100%;
-	height: 100%;
+    display: block;
+    width: 100%;
+    height: 100%;
 }
 
 footer {
@@ -132,6 +132,69 @@ input[type=range]::-webkit-slider-thumb {
     background-color: #139fd0;
 }
 
+#msg {
+    position: absolute;
+    right: 0;
+    bottom: 45px;
+    padding: 0 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+}
+
+#channel p, #list p {
+    float: left;
+    background-color: rgba(0, 0, 0, 0.5);
+    line-height: 36px;
+    text-align: center;
+    width: 89px;
+    margin: 2px 0 0 2px;
+    box-sizing: border-box;
+    border: 1px solid white;
+    cursor: pointer;
+    -webkit-transition: opacity 0.5s;
+    opacity: 0;
+}
+
+#channel p:hover, #list p:hover {
+    background-color: rgba(255, 255, 255, 0.5);
+    color: black;
+}
+
+#channel p.active, #list p.active {
+    background-color: rgba(19, 159, 208, 0.5);
+}
+
+#list p {
+    line-height: 24px;
+    margin: 1px 0 0 0;
+    box-sizing: border-box;
+    cursor: pointer;
+    padding-left: 20px;
+    width: 100%;
+    border: none;
+    float: none;
+    text-align: left;
+}
+
+
+#left, #right {
+    z-index: 10;
+    position: absolute;
+    top: 120px;
+    height: 36px;
+    width: 18px;
+    display: block;
+    background: url(../assets/arrow.png) 100% 0 no-repeat;
+    display: none;
+}
+
+#right {
+    right: 0;
+    background-position: 0 0;
+}
+
+
+
 #loading {
     background: url(../assets/loading.gif) 125px 125px no-repeat;
     width: 100%;
@@ -143,69 +206,6 @@ input[type=range]::-webkit-slider-thumb {
     z-index: -1;
     display: none;
 }
-
-#msg {
-    position: absolute;
-    right: 0;
-    bottom: 45px;
-	padding: 0 10px;
-    background-color: rgba(0, 0, 0, 0.5);
-	display: none;
-}
-
-#channel p, #list p {
-	float: left;
-	background-color: rgba(0, 0, 0, 0.5);
-	line-height: 36px;
-	text-align: center;
-	width: 89px;
-	margin: 2px 0 0 2px;
-	box-sizing: border-box;
-	border: 1px solid white;
-	cursor: pointer;
-	-webkit-transition: opacity 0.5s;
-	opacity: 0;
-}
-
-#channel p:hover, #list p:hover {
-	background-color: rgba(255, 255, 255, 0.5);
-	color: black;
-}
-
-#channel p.active, #list p.active {
-	background-color: rgba(19, 159, 208, 0.5);
-}
-
-#list p {
-	line-height: 24px;
-	margin: 1px 0 0 0;
-	box-sizing: border-box;
-	cursor: pointer;
-	padding-left: 20px;
-	width: 100%;
-	border: none;
-	float: none;
-	text-align: left;
-}
-
-
-#left, #right {
-	z-index: 10;
-	position: absolute;
-	top: 120px;
-	height: 36px;
-	width: 18px;
-	display: block;
-	background: url(../assets/arrow.png) 100% 0 no-repeat;
-    display: none;
-}
-
-#right {
-	right: 0;
-    background-position: 0 0;
-}
-
-
 
 #oauth {
     width: 100%;

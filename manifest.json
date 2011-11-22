@@ -18,9 +18,8 @@
     "background_page": "pages/background.html",
 
     "permissions": [
-        "tabs",
-        "http://douban.fm/*",
-        "http://*.douban.com/*"
+        "cookies",
+        "http://douban.fm/*"
     ]
 }
 

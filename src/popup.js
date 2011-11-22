@@ -6,7 +6,7 @@
     var artist = player.querySelector('p');
     var progress = player.querySelector('header div');
     var soundCtr = player.querySelector('input[type=range]');
-	var channelCurrent = 0;
+    var channelCurrent = 0;
     var channelTo;
 
 
@@ -102,7 +102,7 @@
         case 'set':
             title.innerHTML = msg.title;
             artist.innerHTML = msg.artist + ' | ' + msg.albumtitle;
-			doubanlink.href = msg.album;
+            doubanlink.href = msg.album;
             progress.title = strftime(msg.time) + '/' + strftime(msg.length);
             progress.style.width = msg.time / msg.length * 275 + 'px';
             player.style.backgroundImage = 'url('+ msg.picture +')';
@@ -110,9 +110,9 @@
             list.style.backgroundImage = 'url('+ msg.picture +')';
             soundCtr.value = msg.volume * 100;
             if (msg.like === '1') {love.className = 'on';}
-			else {love.className = '';}
+            else {love.className = '';}
             if (msg.isRepeat) {repeat.className = 'on';}
-			else {repeat.className = '';}
+            else {repeat.className = '';}
             isPlay = msg.isPlay;
             if (isPlay) {
                 play.style.backgroundImage = 'url(../assets/pause.png)';
@@ -125,7 +125,7 @@
                 loading.style.display = 'block';
             }
 
-			listFlush(msg.list, Number(msg.current));
+            listFlush(msg.list, Number(msg.current));
             break;
         case 'canplaythrough':
             if (msg.status) {
@@ -136,24 +136,12 @@
                 progress.style.width = 0;
             }
             break;
-        case 'oauth_result':
-            if (msg.status) {
-                var c = channel.querySelector('.active');
-                    if (c) {c.className = ''}
-                    channelCurrent = channelTo.v;
-                    this.className = 'active';
-                    localStorage.channel = channelCurrent;
-                    port.postMessage({cmd: 'channel', original: 1});
-                    slideshow.next();
-                    msg.innerHTML = '切换至 ' + channelTo.t;
-                    msg.style.display = 'block';
-                    setTimeout(function () {
-                        msg.style.display = 'none';
-                    }, 5000);
-            }
-            break;
         case 'error':
-            title.innerHTML = '出错啦, 请检查网络';
+            msg.innerHTML = msg.msg;
+            msg.style.display = 'block';
+            setTimeout(function () {
+                msg.style.display = 'none';
+            }, 5000);
             break;
         }
     });
@@ -230,7 +218,7 @@
 
 
     channelCurrent = Number(localStorage.channel);
-	channelOrient(channelCurrent, channelList);
+    channelOrient(channelCurrent, channelList);
 
     delegate(channel, 'p', 'click', function () {
         if (!this.dataset.cascade) {channelFlush(channelList)}
@@ -244,11 +232,30 @@
                 channelFlush(obj.sub, this.dataset.cascade);
             }
             else {
-                if ((obj.v === -1 || obj.v === 0) && !(localStorage.getItem('access_token') && localStorage.getItem('access_token_secret')
-			&& localStorage.getItem('consumer_key') && localStorage.getItem('consumer_key_secret')
-			&& localStorage.getItem('signature_method'))) {
-                    oauth.style.top = 0;
-                    channelTo = obj;
+                if (obj.v === -1 || obj.v === 0) {
+                    chrome.cookies.get({
+                        url:'http://douban.fm/',
+                        name: 'fmNlogin'
+                    }, function (cookie) {
+                        if (cookie) {
+                            var c = channel.querySelector('.active');
+                            if (c) {c.className = ''}
+                            channelCurrent = obj.v;
+                            this.className = 'active';
+                            localStorage.channel = channelCurrent;
+                            port.postMessage({cmd: 'channel', original: 1});
+                            slideshow.next();
+                            msg.innerHTML = '切换至 ' + obj.t;
+                            msg.style.display = 'block';
+                            setTimeout(function () {
+                                msg.style.display = 'none';
+                            }, 5000);
+                        }
+                        else {
+                            oauth.style.top = 0;
+                        }
+                    });
+
                 }
                 else {
                     var c = channel.querySelector('.active');
@@ -269,7 +276,7 @@
     });
 
     oauth.querySelector('a').addEventListener('click', function (e) {
-        port.postMessage({cmd: 'oauth', channel: channelTo.v});
+        window.open('http://douban.fm/');
         oauth.style.top = '100%';
         e.preventDefault();
     }, false);
@@ -294,7 +301,6 @@
                     pp.style.opacity = 1;
                 }, i*100);
             })();
-            //html += '<p data-cascade="' + (cascade ? cascade + '|' : '') + i + '"' + (data[i].v !== undefined && data[i].v === channelCurrent ? 'class="active"' : '') +'>' + data[i].t + '</p>';
         }
         if (cascade) {
             p = document.createElement('p');
@@ -308,9 +314,7 @@
                     pp.style.opacity = 1;
                 }, i*100);
             })();
-            //html += '<p class="nav" data-cascade="' + cascade.slice(0, -2) + '">上一层</p>';
         }
-        //channel.innerHTML = html;
     }
 
     function channelOrient(v, list, index) {
@@ -333,32 +337,32 @@
         return false;
     }
 
-	delegate(list, 'p', 'click', function () {
+    delegate(list, 'p', 'click', function () {
         if (this.className !== 'active') {
             port.postMessage({cmd: 'index', index: Number(this.dataset.index)});
         }
     });
 
 
-	function listFlush(playList, current) {
+    function listFlush(playList, current) {
         var i = current - 5 < 0 ? 0 : current - 5,
-			len = current + 6 > playList.length ? playList.length : current + 6,
-			p,
-			j = 0;
-		list.innerHTML = '';
+        len = current + 6 > playList.length ? playList.length : current + 6,
+        p,
+        j = 0;
+        list.innerHTML = '';
         for (; i < len ; i += 1) {
-			p = document.createElement('p');
-			p.dataset.index = i;
-			if (current === i) {p.className = 'active';}
-			p.innerHTML = playList[i].title + ' - ' + playList[i].artist;
-			list.appendChild(p);
-			j++;
-			(function () {
-				var pp = p;
-				setTimeout(function () {
-					pp.style.opacity = 1;
-				}, j*100);
-			})();
+            p = document.createElement('p');
+            p.dataset.index = i;
+            if (current === i) {p.className = 'active';}
+            p.innerHTML = playList[i].title + ' - ' + playList[i].artist;
+            list.appendChild(p);
+            j++;
+            (function () {
+                var pp = p;
+                setTimeout(function () {
+                    pp.style.opacity = 1;
+                }, j*100);
+            })();
         }
     }
 
@@ -397,4 +401,28 @@
         childCtor.prototype.constructor = childCtor;
     }
 
+    function ajax(method, url, data, success, error, timeout) {
+        var client = new XMLHttpRequest(), isTimeout = false;
+        method = method.toLowerCase();
+        if (method === 'get' && data) {
+            url += '?' + data;
+            data = null;
+        }
+        client.onload = function () {
+            if (!isTimeout && ((client.status >= 200 && client.status < 300) || client.status == 304)) {
+                success(client);
+            }
+            else {
+                error(client);
+            }
+        };
+        client.onerror = function () {
+            error(client)
+        }
+        client.open(method, url, true);
+        if (method === 'post') {client.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');}
+        client.setRequestHeader('ajax', 'true');
+        client.send(data);
+        setTimeout(function () {isTimeout = true;}, timeout || 2000);
+    };
 })(this, this.document);

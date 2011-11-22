@@ -161,24 +161,6 @@
                         port.postMessage(getCurrentSongInfo());
                     });
                     break;
-                case 'oauth':
-                    oauth(function () {
-                        if (p) {
-                            port.postMessage({cmd: 'oauth_result', status: true});
-                        }
-                        else {
-                            localStorage.channel = msg.channel;
-                            playList = playList.slice(0, current+1);
-                            fetchSongs(function () {
-                                current += 1;
-                                audio.src = playList[current].url;
-                                if (isPlay) {audio.play();}
-                            });
-                        }
-                    }, function () {
-                        //port.postMessage({cmd: 'oauth_result', status: false});
-                    });
-                    break;
                 }
             });
 
@@ -204,100 +186,112 @@
         info.isRepeat = isRepeat;
         info.volume = audio.volume;
         info.canplaythrough = canplaythrough;
-		info.current = current;
-		info.list = playList;
+        info.current = current;
+        info.list = playList;
         return info;
     }
 
     function fetchSongs(fn) {
         var channel = localStorage.channel;
-		if (channel === '-1') {
-			likedFm(fn);
-		}
-		else {
-        var r = rand();
-        h = h.slice(-20);
-        ajax(
-            'get',
-            'http://douban.fm/j/mine/playlist',
-            h.length ? 'type=s&sid='+ h[h.length - 1].slice(1, -2) +'&h='+ h.join('') +'&channel='+channel+'&from=mainsite&r='+r : 'type=n&h=&channel='+channel+'&from=mainsite&r='+r,
-            10000,
-            function (client) {
-                client = JSON.parse(client.responseText);
-                for (var i = 0, len = client.song.length ; i < len ; i += 1) {
-                    if (/^\d+$/.test(client.song[i].sid)) {
-                        client.song[i].picture = client.song[i].picture.replace('mpic', 'lpic');
-						client.song[i].url = 'http://otho.douban.com/view/song/small/p'+client.song[i].sid+'.mp3';
-						client.song[i].album = 'http://music.douban.com'+client.song[i].album;
-                        playList.push(client.song[i]);
-                    }
+        if (channel === '-1') {
+            chrome.cookies.get({
+                url:'http://douban.fm/',
+                name: 'fmNlogin'
+            }, function (cookie) {
+                if (cookie) {
+                    likedFm(fn);
                 }
-                fn && fn();
-            },
-            function (client) {
-                if (p) {p.postMessage({cmd: 'error'})}
-            }
-        );
-		}
+                else {
+                    channel = '1';
+                    localStorage.channel = channel;
+                    fetchSongs(fn);
+                }
+            });
+        }
+        else {
+            var r = rand();
+            h = h.slice(-20);
+            ajax(
+                'get',
+                'http://douban.fm/j/mine/playlist',
+                h.length ? 'type=s&sid='+ h[h.length - 1].slice(1, -2) +'&h='+ h.join('') +'&channel='+channel+'&from=mainsite&r='+r : 'type=n&h=&channel='+channel+'&from=mainsite&r='+r,
+                10000,
+                function (client) {
+                    client = JSON.parse(client.responseText);
+                    for (var i = 0, len = client.song.length ; i < len ; i += 1) {
+                        if (/^\d+$/.test(client.song[i].sid)) {
+                            client.song[i].picture = client.song[i].picture.replace('mpic', 'lpic');
+                            client.song[i].url = 'http://otho.douban.com/view/song/small/p'+client.song[i].sid+'.mp3';
+                            client.song[i].album = 'http://music.douban.com'+client.song[i].album;
+                            playList.push(client.song[i]);
+                        }
+                    }
+                    fn && fn();
+                },
+                function (client) {
+                    if (p) {p.postMessage({cmd: 'error'})}
+                }
+            );
+        }
     }
 
-	function likedFm(fn) {
-		if (likedSongs.length) {
-			for (var i = 0, len = likedSongs.length < 5 ? likedSongs.length : 5, song ; i < len ; i += 1) {
-				playList.push(likedSongs[Math.floor(Math.random() * likedSongs.length)]);
-			}
-			fn && fn();
-		}
-		else {
-			fetchLikedSongs(function () {
-				for (var i = 0, len = likedSongs.length < 5 ? likedSongs.length : 5, song ; i < len ; i += 1) {
-					playList.push(likedSongs[Math.floor(Math.random() * likedSongs.length)]);
-				}
-				fn && fn();
-			});
-		}
-	}
+    function likedFm(fn) {
+        if (likedSongs.length) {
+            for (var i = 0, len = likedSongs.length < 5 ? likedSongs.length : 5, song ; i < len ; i += 1) {
+                playList.push(likedSongs[Math.floor(Math.random() * likedSongs.length)]);
+            }
+            fn && fn();
+        }
+        else {
+            fetchLikedSongs(function () {
+                for (var i = 0, len = likedSongs.length < 5 ? likedSongs.length : 5, song ; i < len ; i += 1) {
+                    playList.push(likedSongs[Math.floor(Math.random() * likedSongs.length)]);
+                }
+                fn && fn();
+            });
+        }
+    }
 
-	function fetchLikedSongs(fn) {
-		var index = 0;
-		fetch(0)
-		function fetch(index) {
-			ajax(
-				'get',
-				'http://douban.fm/mine',
-				'type=liked&start=' + index,
-				10000,
-				function (client) {
-					likedSongsParser.innerHTML = client.responseText.match(/(<div id="record_viewer">[\s\S]+)<div class="paginator">/m)[1].replace(/onload="reset_icon_size\(this\);"/gm, '');
-					var songs = likedSongsParser.querySelectorAll('.info_wrapper');
-					for (var i = 0, len = songs.length, song ; i < len ; i += 1) {
-						song = songs[i];
-						var item = {};
-						item.album = song.querySelector('a').href;
-						item.picture = song.querySelector('img').src.replace('spic', 'lpic');
-						item.title = song.querySelector('.song_title').innerHTML;
-						item.artist = song.querySelector('.performer').innerHTML;
-						item.albumtitle = song.querySelector('.source a').innerHTML;
-						item.sid = song.querySelector('.action').getAttribute('sid');
-						item.url = 'http://otho.douban.com/view/song/small/p'+item.sid+'.mp3';
-						item.like = '1';
-						likedSongs.push(item);
-					}
-					likedSongsParser.innerHTML = '';
-					if (index === 0 && fn) {fn();}
-					if (len === 15) {
-						setTimeout(function () {
-							index += 15;
-							fetch(index);
-						}, 1000);
-					}
-				},
-				function (client) {
-					if (p) {p.postMessage({cmd: 'error'})}
-				}
-			);
-		}
-	}
+    function fetchLikedSongs(fn) {
+        var index = 0;
+        fetch(0)
+        function fetch(index) {
+            ajax(
+                'get',
+                'http://douban.fm/mine',
+                'type=liked&start=' + index,
+                10000,
+                function (client) {
+                    likedSongsParser.innerHTML = client.responseText.match(/(<div id="record_viewer">[\s\S]+)<div class="paginator">/m)[1].replace(/onload="reset_icon_size\(this\);"/gm, '');
+                    var songs = likedSongsParser.querySelectorAll('.info_wrapper');
+                    for (var i = 0, len = songs.length, song ; i < len ; i += 1) {
+                        song = songs[i];
+                        var item = {};
+                        item.album = song.querySelector('a').href;
+                        item.picture = song.querySelector('img').src.replace('spic', 'lpic');
+                        item.title = song.querySelector('.song_title').innerHTML;
+                        item.artist = song.querySelector('.performer').innerHTML;
+                        item.albumtitle = song.querySelector('.source a').innerHTML;
+                        item.sid = song.querySelector('.action').getAttribute('sid');
+                        item.url = 'http://otho.douban.com/view/song/small/p'+item.sid+'.mp3';
+                        item.like = '1';
+                        likedSongs.push(item);
+                    }
+                    likedSongsParser.innerHTML = '';
+                    if (index === 0 && fn) {fn();}
+                    if (len === 15) {
+                        setTimeout(function () {
+                            index += 15;
+                            fetch(index);
+                        }, 1000);
+                    }
+                },
+                function (client) {
+                    if (p) {p.postMessage({cmd: 'error'})}
+                }
+            );
+        }
+    }
 
     function ajax(method, url, data, timeout, success, error) {
         var client = new XMLHttpRequest(), data, isTimeout = false, self = this;
