@@ -11,11 +11,24 @@
 	var likedSongs = [];
 
 	localStorage.channel || (localStorage.channel = '1');
+    localStorage.notify || (localStorage.notify = '1');
 
 
     audio.addEventListener('loadstart', function () {
         canplaythrough = false;
         p && p.postMessage({cmd: 'canplaythrough', status: false});
+        if (localStorage.notify === '1') {
+            var notification = webkitNotifications.createNotification(
+                '../assets/icon48.png',
+                '即将播放',
+                playList[current].artist + ' ' + playList[current].title
+            );
+
+            notification.show();
+            setTimeout(function () {
+                notification.cancel();
+            }, 5000);
+        }
     },false);
 
     audio.addEventListener('canplaythrough', function () {
@@ -64,7 +77,7 @@
                     }
                     break;
                 case 'next':
-					if (localStorage.channel !== '-1') {h.push('|' + playList[current].sid + ':s');}
+                    if (localStorage.channel !== '-1') {h.push('|' + playList[current].sid + ':s');}
 
                     if (playList[current + 1]) {
                         current += 1;
@@ -215,7 +228,6 @@
                 'get',
                 'http://douban.fm/j/mine/playlist',
                 h.length ? 'type=s&sid='+ h[h.length - 1].slice(1, -2) +'&h='+ h.join('') +'&channel='+channel+'&from=mainsite&r='+r : 'type=n&h=&channel='+channel+'&from=mainsite&r='+r,
-                10000,
                 function (client) {
                     client = JSON.parse(client.responseText);
                     for (var i = 0, len = client.song.length ; i < len ; i += 1) {
@@ -260,7 +272,6 @@
                 'get',
                 'http://douban.fm/mine',
                 'type=liked&start=' + index,
-                10000,
                 function (client) {
                     likedSongsParser.innerHTML = client.responseText.match(/(<div id="record_viewer">[\s\S]+)<div class="paginator">/m)[1].replace(/onload="reset_icon_size\(this\);"/gm, '');
                     var songs = likedSongsParser.querySelectorAll('.info_wrapper');
@@ -286,36 +297,49 @@
                         }, 1000);
                     }
                 },
-                function (client) {
+                function (client) {console.log('error', client)
                     if (p) {p.postMessage({cmd: 'error'})}
                 }
             );
         }
     }
 
-    function ajax(method, url, data, timeout, success, error) {
-        var client = new XMLHttpRequest(), data, isTimeout = false, self = this;
+    function ajax(method, url, data, success, error, timeout) {
+        var client = new XMLHttpRequest(), isTimeout = false, isComplete = false;
         method = method.toLowerCase();
-        if (typeof data === 'object') {
-            data = stringify(data);
-        }
         if (method === 'get' && data) {
             url += '?' + data;
             data = null;
         }
         client.onload = function () {
-            if (!isTimeout && ((client.status >= 200 && client.status < 300) || client.status == 304)) {
-                success(client);
+            if (!isComplete) {
+                if (!isTimeout && ((client.status >= 200 && client.status < 300) || client.status == 304)) {
+                    success(client);
+                }
+                else {
+                    error(client);
+                }
+                isComplete = true;
             }
-            else {
+        };
+        client.onerror = function () {
+            if (!isComplete) {
                 error(client);
+                isComplete = true;
             }
         };
         client.open(method, url, true);
-        method === 'post' && client.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        if (method === 'post') {client.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');}
         client.setRequestHeader('ajax', 'true');
         client.send(data);
-        setTimeout(function () {isTimeout = true;}, timeout);
+        setTimeout(function () {
+            isTimeout = true;
+            if (!isComplete) {
+                client.timeout = true;
+                error(client);
+                isComplete = true;
+            }
+        }, timeout || 2000);
     };
 
     function rand() {

@@ -148,6 +148,18 @@
         }
     });
 
+    player.addEventListener('contextmenu', function (e) {
+        if (isPlay) {
+            play.style.backgroundImage = 'url(../assets/play.png)';
+        }
+        else {
+            play.style.backgroundImage = 'url(../assets/pause.png)';
+        }
+        isPlay = !isPlay;
+        port.postMessage({cmd: 'switch', isPlay: isPlay});
+        e.preventDefault();
+    }, false);
+
     play.addEventListener('click', function (e) {
         if (isPlay) {
             this.style.backgroundImage = 'url(../assets/play.png)';
