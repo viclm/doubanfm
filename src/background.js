@@ -332,8 +332,9 @@
                 function (client) {
                     fn(/<div class="info_wrapper">/m.test(client.responseText));
                 },
-                function (client) {
-                    fn(false, true);
+                function (client) {console.log(client)
+                    if (client.timeout) {fn(false, true)}
+                    else fn(false);
                 }
             );
         }

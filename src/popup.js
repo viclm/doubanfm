@@ -157,7 +157,7 @@
             }
             break;
         case 'error':
-            alert.style.top = 0;
+            error.style.top = 0;
             break;
         }
     });
