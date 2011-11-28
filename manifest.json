@@ -1,6 +1,6 @@
 {
     "name": "豆瓣FM 精美版",
-    "version": "4.3",
+    "version": "4.3.2",
     "description": "豆瓣电台, 时尚界面，去插播广告, 完美控制，可单曲循环，可播放上一首，带播放列表, 红心兆赫只播放您喜欢的歌曲",
 
     "icons": {
@@ -21,7 +21,6 @@
 
     "permissions": [
         "notifications",
-        "cookies",
         "http://douban.fm/*"
     ]
 }

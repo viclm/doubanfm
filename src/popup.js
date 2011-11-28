@@ -138,12 +138,26 @@
                 progress.style.width = 0;
             }
             break;
+        case 'channel':
+            if (msg.channel) {
+                var c = channel.querySelector('.active');
+                if (c) {c.className = ''}
+                channelCurrent = msg.channel.v;
+                //localStorage.channel = channelCurrent;
+                this.className = 'active';
+                slideshow.next();
+                msg.innerHTML = '切换至 ' + msg.channel.t;
+                msg.style.display = 'block';
+                setTimeout(function () {
+                    msg.style.display = 'none';
+                }, 5000);
+            }
+            else {
+                oauth.style.top = 0;
+            }
+            break;
         case 'error':
-            msg.innerHTML = msg.msg;
-            msg.style.display = 'block';
-            setTimeout(function () {
-                msg.style.display = 'none';
-            }, 5000);
+            alert.style.top = 0;
             break;
         }
     });
@@ -244,45 +258,7 @@
                 channelFlush(obj.sub, this.dataset.cascade);
             }
             else {
-                if (obj.v === -1 || obj.v === 0) {
-                    chrome.cookies.get({
-                        url:'http://douban.fm/',
-                        name: 'fmNlogin'
-                    }, function (cookie) {
-                        if (cookie) {
-                            var c = channel.querySelector('.active');
-                            if (c) {c.className = ''}
-                            channelCurrent = obj.v;
-                            this.className = 'active';
-                            localStorage.channel = channelCurrent;
-                            port.postMessage({cmd: 'channel', original: 1});
-                            slideshow.next();
-                            msg.innerHTML = '切换至 ' + obj.t;
-                            msg.style.display = 'block';
-                            setTimeout(function () {
-                                msg.style.display = 'none';
-                            }, 5000);
-                        }
-                        else {
-                            oauth.style.top = 0;
-                        }
-                    });
-
-                }
-                else {
-                    var c = channel.querySelector('.active');
-                    if (c) {c.className = ''}
-                    channelCurrent = obj.v;
-                    this.className = 'active';
-                    localStorage.channel = channelCurrent;
-                    port.postMessage({cmd: 'channel', original: 1});
-                    slideshow.next();
-                    msg.innerHTML = '切换至 ' + obj.t;
-                    msg.style.display = 'block';
-                    setTimeout(function () {
-                        msg.style.display = 'none';
-                    }, 5000);
-                }
+                port.postMessage({cmd: 'channel', channel: obj});
             }
         }
     });
