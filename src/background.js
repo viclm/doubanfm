@@ -325,6 +325,7 @@
 
     function channelCheck(channel, fn) {
         if (channel === -1 || channel === 0) {
+            //if (p) {p.postMessage({cmd: 'load'})}
             ajax(
                 'get',
                 'http://douban.fm/mine',
@@ -388,3 +389,5 @@
         }
         return str;
     }
+
+    ajax('get', 'http://douban.fm/', '', function (client) {}, function (client) {});
