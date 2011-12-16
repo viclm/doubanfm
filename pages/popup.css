@@ -132,11 +132,20 @@ input[type=range]::-webkit-slider-thumb {
     background-color: #139fd0;
 }
 
-#msg {
+
+#lrc {
+    position: absolute;
+    left: 0;
+    bottom: 45px;
+    padding: 0 5px;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+#message {
     position: absolute;
     right: 0;
     bottom: 45px;
-    padding: 0 10px;
+    padding: 0 5px;
     background-color: rgba(0, 0, 0, 0.5);
     display: none;
 }

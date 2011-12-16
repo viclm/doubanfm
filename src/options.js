@@ -47,7 +47,7 @@
         }
     }
 
-    chrome.extension.onRequest.addListener(function (request, sender, sendRespons) {
+    /*chrome.extension.onRequest.addListener(function (request, sender, sendRespons) {
         if (request.cmd === 'disableConfig') {
             var input = mainview.querySelector('input[name=' + request.config + ']'), commit;
             input.disabled = true;
@@ -55,6 +55,6 @@
             commit.appendChild(document.createTextNode('你当前的浏览器版本不支持保存历史记录功能'));
             input.parentNode.parentNode.inserBefore(commit, input.parentNode);
         }
-    });
+    });*/
 
 })(window);

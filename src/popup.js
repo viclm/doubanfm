@@ -98,6 +98,9 @@
         case 'progress':
             progress.style.width = msg.time / msg.length * 275 + 'px';
             progress.title = strftime(msg.time) + '/' + strftime(msg.length);
+            if (msg.lrc) {
+                lrc.innerHTML = msg.lrc;
+            }
             break;
         case 'set':
             title.innerHTML = msg.title;
@@ -136,6 +139,7 @@
             else {
                 loading.style.display = 'block';
                 progress.style.width = 0;
+                lrc.innerHTML = '';
             }
             break;
         case 'channel':
@@ -146,10 +150,10 @@
                 //localStorage.channel = channelCurrent;
                 this.className = 'active';
                 slideshow.next();
-                msg.innerHTML = '切换至 ' + msg.channel.t;
-                msg.style.display = 'block';
+                message.innerHTML = '切换至 ' + msg.channel.t;
+                message.style.display = 'block';
                 setTimeout(function () {
-                    msg.style.display = 'none';
+                    message.style.display = 'none';
                 }, 5000);
             }
             else {
