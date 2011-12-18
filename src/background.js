@@ -369,7 +369,7 @@
                     }
                 },
                 error: function (client) {
-                    fetch(index);
+                    //fetch(index);
                 }
             });
         }
@@ -377,8 +377,6 @@
 
     function channelCheck(channel, fn) {
         if (channel === -1 || channel === 0) {
-            //if (p) {p.postMessage({cmd: 'load'})}
-            //
             chrome.cookies.get({
                 url: 'http://douban.fm',
                 name: 'dbcl2'

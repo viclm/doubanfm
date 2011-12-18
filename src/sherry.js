@@ -50,14 +50,14 @@ Sherry = S = {
         }
 
         var client = new XMLHttpRequest(),
-            isTimeout = false,
-            isComplete = false,
             method = options.method ? options.method.toLowerCase() : 'get',
             data = options.data,
-            timeout = options.timeout || 2000,
+            timeout = options.timeout,
             before = options.before || function () {},
             load = options.load || function () {},
-            error = options.error || function () {};
+            error = options.error || function () {},
+            isTimeout = false,
+            isComplete = false;
 
         if (method === 'get' && data) {
             url += '?' + data;
@@ -87,14 +87,16 @@ Sherry = S = {
         if (method === 'post') {client.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');}
         client.setRequestHeader('ajax', 'true');
         before(client);
-        setTimeout(function () {
-            isTimeout = true;
-            if (!isComplete) {
-                client.timeout = true;
-                error(client);
-                isComplete = true;
-            }
-        }, timeout);
+        if (timeout) {
+            setTimeout(function () {
+                isTimeout = true;
+                if (!isComplete) {
+                    client.timeout = true;
+                    error(client);
+                    isComplete = true;
+                }
+            }, timeout);
+        }
         client.send(data);
     },
 
