@@ -320,15 +320,17 @@
 
     function likedFm(fn) {
         if (likedSongs.length) {
-            for (var i = 0, len = likedSongs.length < 5 ? likedSongs.length : 5, song ; i < len ; i += 1) {
-                playList.push(likedSongs[Math.floor(Math.random() * likedSongs.length)]);
+            for (var i = 0, len = likedSongs.length < 5 ? likedSongs.length : 5, random ; i < len ; i += 1) {
+                random = Math.floor(Math.random() * likedSongs.length);
+                playList.push(likedSongs.splice(random, 1)[0]);
             }
             fn && fn();
         }
         else {
             fetchLikedSongs(function () {
-                for (var i = 0, len = likedSongs.length < 5 ? likedSongs.length : 5, song ; i < len ; i += 1) {
-                    playList.push(likedSongs[Math.floor(Math.random() * likedSongs.length)]);
+                for (var i = 0, len = likedSongs.length < 5 ? likedSongs.length : 5, random ; i < len ; i += 1) {
+                    random = Math.floor(Math.random() * likedSongs.length);
+                    playList.push(likedSongs.splice(random, 1)[0]);
                 }
                 fn && fn();
             });
@@ -376,6 +378,14 @@
     function channelCheck(channel, fn) {
         if (channel === -1 || channel === 0) {
             //if (p) {p.postMessage({cmd: 'load'})}
+            //
+            chrome.cookies.get({
+                url: 'http://douban.fm',
+                name: 'dbcl2'
+            }, function (c) {
+                fn(c);
+            });
+
 
             chrome.cookies.getAll({
                 url: 'http://douban.fm',
@@ -385,7 +395,7 @@
                     item = c[i];console.log(i, item.name, item.value)
                     if ((item.name === 'fmNlogin' && item.value === '"y"') || item.name === 'dbcl2') {process += 1}
                 }
-                fn(process === 2);
+                //fn(process === 2);
             });
 
             return;
