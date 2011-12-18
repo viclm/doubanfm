@@ -26,11 +26,12 @@ body > div > div {
 
 header, footer, section {
     background-color: rgba(0, 0, 0, 0.5);
-    padding: 10px;
+    padding: 5px 10px 10px 10px;
 }
 
 header {
-    padding: 0;
+    padding: 0 0 5px 0;
+    cursor: pointer;
 }
 
 header div {
@@ -136,7 +137,7 @@ input[type=range]::-webkit-slider-thumb {
 #lrc {
     position: absolute;
     left: 0;
-    bottom: 45px;
+    bottom: 40px;
     padding: 0 5px;
     background-color: rgba(0, 0, 0, 0.5);
 }
@@ -144,10 +145,12 @@ input[type=range]::-webkit-slider-thumb {
 #message {
     position: absolute;
     right: 0;
-    bottom: 45px;
+    bottom: 40px;
     padding: 0 5px;
     background-color: rgba(0, 0, 0, 0.5);
-    display: none;
+    opacity: 0;
+    -webkit-transition: opacity 1s;
+    color: #f00ea0;
 }
 
 #channel p, #list p {

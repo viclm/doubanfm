@@ -1,13 +1,11 @@
 (function (window, document, undefined) {
     var isPlay = false;
-    var timer = null;
     var port = chrome.extension.connect({name: 'fm'});
     var title = player.querySelector('h1');
     var artist = player.querySelector('p');
     var progress = player.querySelector('header div');
     var soundCtr = player.querySelector('input[type=range]');
     var channelCurrent = 0;
-    var channelTo;
 
 
     function S(args) {
@@ -90,6 +88,9 @@
 
     var slideshow = new S();
 
+    channelCurrent = Number(localStorage.channel);
+    channelOrient(channelCurrent, channelList);
+
 
     port.postMessage({cmd: 'get'});
 
@@ -128,8 +129,6 @@
                 loading.style.display = 'block';
             }
 
-            channelCurrent = Number(localStorage.channel);
-            channelOrient(channelCurrent, channelList);
             listFlush(msg.list, Number(msg.current));
             break;
         case 'canplaythrough':
@@ -147,24 +146,24 @@
                 var c = channel.querySelector('.active');
                 if (c) {c.className = ''}
                 channelCurrent = msg.channel.v;
-                //localStorage.channel = channelCurrent;
-                this.className = 'active';
+                channelOrient(channelCurrent, channelList);
                 slideshow.next();
-                message.innerHTML = '切换至 ' + msg.channel.t;
-                message.style.display = 'block';
-                setTimeout(function () {
-                    message.style.display = 'none';
-                }, 5000);
+                alert('切换至 ' + msg.channel.t, message);
             }
             else {
                 oauth.style.top = 0;
             }
             break;
         case 'error':
-            error.style.top = 0;
+            alert('您当前网速很慢', message);
             break;
         }
     });
+
+
+    progress.parentNode.addEventListener('click', function (e) {
+        port.postMessage({cmd: 'skip', rate: e.offsetX/275});
+    }, false);
 
     player.addEventListener('contextmenu', function (e) {
         if (isPlay) {
@@ -251,7 +250,9 @@
 
 
     delegate(channel, 'p', 'click', function () {
-        if (!this.dataset.cascade) {channelFlush(channelList)}
+        if (!this.dataset.cascade) {
+            channelFlush(channelList);
+        }
         else {
             var cascade = this.dataset.cascade.split('|'), i, len, obj;
             obj = channelList[cascade[0]];
@@ -261,7 +262,7 @@
             if (obj.sub) {
                 channelFlush(obj.sub, this.dataset.cascade);
             }
-            else {
+            else if (obj.v !== channelCurrent) {
                 port.postMessage({cmd: 'channel', channel: obj});
             }
         }
@@ -329,6 +330,7 @@
     delegate(list, 'p', 'click', function () {
         if (this.className !== 'active') {
             port.postMessage({cmd: 'index', index: Number(this.dataset.index)});
+            slideshow.prev();
         }
     });
 
@@ -353,6 +355,15 @@
                 }, j*100);
             })();
         }
+    }
+
+
+    function alert(msg, node) {
+        node.innerHTML = msg;
+        node.style.opacity = '1';
+        setTimeout(function () {
+            node.style.opacity = '0';
+        }, 5000);
     }
 
 
@@ -390,28 +401,4 @@
         childCtor.prototype.constructor = childCtor;
     }
 
-    function ajax(method, url, data, success, error, timeout) {
-        var client = new XMLHttpRequest(), isTimeout = false;
-        method = method.toLowerCase();
-        if (method === 'get' && data) {
-            url += '?' + data;
-            data = null;
-        }
-        client.onload = function () {
-            if (!isTimeout && ((client.status >= 200 && client.status < 300) || client.status == 304)) {
-                success(client);
-            }
-            else {
-                error(client);
-            }
-        };
-        client.onerror = function () {
-            error(client)
-        }
-        client.open(method, url, true);
-        if (method === 'post') {client.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');}
-        client.setRequestHeader('ajax', 'true');
-        client.send(data);
-        setTimeout(function () {isTimeout = true;}, timeout || 2000);
-    };
 })(this, this.document);

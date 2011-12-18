@@ -1,6 +1,6 @@
 
     var audio = document.querySelector('audio');
-    var isPlay = false;
+    var isPlay = localStorage.autoplay === '1';
     var isRepeat = false;
     var playList = [];
     var h = [];
@@ -13,6 +13,8 @@
 	localStorage.channel || (localStorage.channel = '1');
     localStorage.notify || (localStorage.notify = '1');
     localStorage.lrc || (localStorage.lrc = '1');
+    localStorage.autoplay || (localStorage.autoplay = '1');
+
 
     function parseLrc(lrc) {
         lrc = lrc.split('\n');
@@ -25,14 +27,12 @@
                 time = res[1].slice(1, -1).split('][');
                 for (var j = 0, jLen = time.length, tmp ; j < jLen ; j += 1) {
                     tmp = time[j].split(':');
-                    //console.log(res[1], tmp, res[2], '+++', lrc[i])
                     nLrc[Number(tmp[0])*60+Math.round(tmp[1])] = res[2];
                 }
             }
         }
         return nLrc;
     }
-    //S.ajax('get', 'http://ting.baidu.com/data2/lrc/6172759/6172759.lrc', '', function (client) {parseLrc(client.responseText)});
 
     audio.addEventListener('loadstart', function () {
         canplaythrough = false;
@@ -41,19 +41,21 @@
             S.jsonp('http://openapi.baidu.com/public/2.0/mp3/info/suggestion?format=json&word='+encodeURIComponent(playList[current].title.replace(/\(.+\)$/, ''))+'&callback=', function (data) {
                 data = data.song;
                 for (var i = 0, len = data.length ; i < len ; i += 1) {console.log(playList[current].title + '-' + playList[current].artist, data[i].songname + '-' + data[i].artistname)
-                    if (playList[current].artist === data[i].artistname) {
-                        S.ajax('get', 'http://ting.baidu.com/data/music/songlink', 'type=aac&speed=&songIds=' + data[i].songid, function (client) {
+                    if (playList[current].artist.indexOf(data[i].artistname) > -1) {
+                        S.ajax('http://ting.baidu.com/data/music/songlink?type=aac&speed=&songIds=' + data[i].songid, function (client) {
                             var lrcLink = JSON.parse(client.responseText).data.songList[0].lrcLink;
-                            S.ajax('get', 'http://ting.baidu.com'+lrcLink, '', function (client) {
-                                playList[current].lrc = parseLrc(client.responseText);console.log(playList[current].lrc)
-                            });
+                            if (lrcLink) {
+                                S.ajax('http://ting.baidu.com'+lrcLink, function (client) {
+                                    playList[current].lrc = parseLrc(client.responseText);console.log(playList[current].lrc);
+                                });
+                            }
                         });
                         break;
                     }
                 }
             });
         }
-        if (localStorage.notify === '1') {
+        if (localStorage.notify === '1' && !p) {
             var notification = webkitNotifications.createNotification(
                 '../assets/icon48.png',
                 '即将播放',
@@ -65,19 +67,18 @@
                 notification.cancel();
             }, 5000);
         }
+        chrome.browserAction.setTitle({title: playList[current].title+'-'+playList[current].artist});
+        if (!playList[current + 1]) {fetchSongs();}
     },false);
 
     audio.addEventListener('canplaythrough', function () {
         canplaythrough = true;
         p && p.postMessage({cmd: 'canplaythrough', status: true});
-        if (!playList[current + 1]) {
-            fetchSongs();
-        }
     },false);
 
     audio.addEventListener('timeupdate', function () {
         var currentTime = Math.round(audio.currentTime), msg;
-        if (currentTime > time) {
+        if (currentTime !== time) {
             time = currentTime;
             if(p) {
                 msg = {cmd: 'progress', time: time, length: Math.round(audio.duration)}
@@ -92,8 +93,19 @@
     audio.addEventListener('ended', function () {
         if (!isRepeat) {
             if (localStorage.channel !== '-1') {h.push('|' + playList[current].sid + ':p');}
-            current += 1;
-            audio.src = playList[current].url;
+            if (playList[current + 1]) {
+                current += 1;
+                audio.src = playList[current].url;
+            }
+            else {
+                fetchSongs(function () {
+                    current += 1;
+                    audio.src = playList[current].url;
+                    if (isPlay) {audio.play();}
+                    time = 0;
+                    port.postMessage(getCurrentSongInfo());
+                });
+            }
         }
         time = 0;
         audio.play();
@@ -105,6 +117,9 @@
             p = port;
             port.onMessage.addListener(function (msg, port) {
                 switch (msg.cmd) {
+                case 'skip':
+                    audio.currentTime = audio.duration * msg.rate;
+                    break;
                 case 'switch':
                     isPlay = msg.isPlay;
                     if (msg.isPlay) {
@@ -204,7 +219,10 @@
                             if (status) {
                                 fetchSongs(function () {
                                     audio.src = playList[0].url;
-                                    if (isPlay) {audio.play();}
+                                    if (isPlay) {
+                                        audio.play();
+                                        chrome.browserAction.setIcon({path: '../assets/icon16_pause.png'});
+                                    }
                                     port.postMessage(getCurrentSongInfo());
                                 });
                             }
@@ -272,24 +290,16 @@
                 h = h.slice(-20);
                 var type = h[h.length-1].slice(-1);
                 if (['b', 'u', 'r'].indexOf(type) > -1) {
-                    ajax(
-                        'get',
-                        'http://douban.fm/j/mine/playlist',
-                        'type='+type+'&sid='+ h[h.length - 1].slice(1, -2) +'&h='+ h.join('') +'&channel=0&from=mainsite&r='+rand(),
-                        function () {},
-                        function () {}
-                    );
+                    S.ajax('http://douban.fm/j/mine/playlist?type='+type+'&sid='+ h[h.length - 1].slice(1, -2) +'&h='+ h.join('') +'&channel=0&from=mainsite&r='+rand(), function () {});
                 }
             }
         }
         else {
             var r = rand();
             h = h.slice(-20);
-            ajax(
-                'get',
-                'http://douban.fm/j/mine/playlist',
-                h.length ? 'type='+h[h.length-1].slice(-1)+'&sid='+ h[h.length - 1].slice(1, -2) +'&h='+ h.join('') +'&channel='+channel+'&from=mainsite&r='+r : 'type=n&h=&channel='+channel+'&from=mainsite&r='+r,
-                function (client) {
+            S.ajax('http://douban.fm/j/mine/playlist', {
+                data: h.length ? 'type='+h[h.length-1].slice(-1)+'&sid='+ h[h.length - 1].slice(1, -2) +'&h='+ h.join('') +'&channel='+channel+'&from=mainsite&r='+r : 'type=n&h=&channel='+channel+'&from=mainsite&r='+r,
+                load: function (client) {
                     client = JSON.parse(client.responseText);
                     for (var i = 0, len = client.song.length ; i < len ; i += 1) {
                         if (/^\d+$/.test(client.song[i].sid)) {
@@ -301,10 +311,10 @@
                     }
                     fn && fn();
                 },
-                function (client) {
+                error: function (client) {
                     if (p) {p.postMessage({cmd: 'error'})}
                 }
-            );
+            });
         }
     }
 
@@ -329,11 +339,9 @@
         var index = 0;
         fetch(0)
         function fetch(index) {
-            ajax(
-                'get',
-                'http://douban.fm/mine',
-                'type=liked&start=' + index,
-                function (client) {
+            S.ajax('http://douban.fm/mine', {
+                data: 'type=liked&start=' + index,
+                load: function (client) {
                     likedSongsParser.innerHTML = client.responseText.match(/(<div id="record_viewer">[\s\S]+)<div class="paginator">/m)[1].replace(/onload="reset_icon_size\(this\);"/gm, '');
                     var songs = likedSongsParser.querySelectorAll('.info_wrapper');
                     for (var i = 0, len = songs.length, song ; i < len ; i += 1) {
@@ -358,71 +366,45 @@
                         }, 1000);
                     }
                 },
-                function (client) {
-                    if (p) {p.postMessage({cmd: 'error'})}
+                error: function (client) {
+                    fetch(index);
                 }
-            );
+            });
         }
     }
 
     function channelCheck(channel, fn) {
         if (channel === -1 || channel === 0) {
             //if (p) {p.postMessage({cmd: 'load'})}
-            ajax(
-                'get',
-                'http://douban.fm/mine',
-                'type=liked&start=0',
-                function (client) {
+
+            chrome.cookies.getAll({
+                url: 'http://douban.fm',
+            }, function (c) {
+                var process = 0;
+                for (var i = 0, len = c.length, item ; i < len ; i += 1) {
+                    item = c[i];console.log(i, item.name, item.value)
+                    if ((item.name === 'fmNlogin' && item.value === '"y"') || item.name === 'dbcl2') {process += 1}
+                }
+                fn(process === 2);
+            });
+
+            return;
+
+            S.ajax('http://douban.fm/mine', {
+                data: 'type=liked&start=0',
+                load: function (client) {
                     fn(/<div class="info_wrapper">/m.test(client.responseText));
                 },
-                function (client) {console.log(client)
+                error: function (client) {console.log(client)
                     if (client.timeout) {fn(false, true)}
                     else fn(false);
                 }
-            );
+            });
         }
         else {
             fn(true);
         }
     }
-
-    function ajax(method, url, data, success, error, timeout) {
-        var client = new XMLHttpRequest(), isTimeout = false, isComplete = false;
-        method = method.toLowerCase();
-        if (method === 'get' && data) {
-            url += '?' + data;
-            data = null;
-        }
-        client.onload = function () {
-            if (!isComplete) {
-                if (!isTimeout && ((client.status >= 200 && client.status < 300) || client.status == 304)) {
-                    success(client);
-                }
-                else {
-                    error(client);
-                }
-                isComplete = true;
-            }
-        };
-        client.onerror = function () {
-            if (!isComplete) {
-                error(client);
-                isComplete = true;
-            }
-        };
-        client.open(method, url, true);
-        if (method === 'post') {client.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');}
-        client.setRequestHeader('ajax', 'true');
-        client.send(data);
-        setTimeout(function () {
-            isTimeout = true;
-            if (!isComplete) {
-                client.timeout = true;
-                error(client);
-                isComplete = true;
-            }
-        }, timeout || 5000);
-    };
 
     function rand() {
         var charset = '1234567890abcdef', str = '', i;
@@ -432,20 +414,4 @@
         return str;
     }
 
-    channelCheck(1, function () {console.log(arguments)});
-    //
-    chrome.cookies.getAll({
-        url: 'http://douban.fm'
-    }, function (a) {
-        for (var i = 0, len = a.length ; i < len ; i += 1) {
-            console.log(1, a[i].expirationDate, a[i].name, a[i].value)
-        }
-    })
-
-    chrome.cookies.getAll({
-        url: 'http://www.douban.com'
-    }, function (a) {
-        for (var i = 0, len = a.length ; i < len ; i += 1) {
-            console.log(2, a[i].expirationDate, a[i].name, a[i].value)
-        }
-    })
+    S.ajax('http://douban.fm/mine?type=liked&start=0', function () {});

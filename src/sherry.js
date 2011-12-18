@@ -1,7 +1,8 @@
 /**
  * @version 1215
  **/
-var Sherry = {
+var Sherry, S;
+Sherry = S = {
 
     extend: function (childCtor, parentCtor) {
         var fnTest = /\bsuperclass\b/, parent = parentCtor.prototype
@@ -42,13 +43,20 @@ var Sherry = {
     },
 
     ajax: function (url, options) {
+        if (typeof options === 'function') {
+            options = {
+                load: options
+            }
+        }
+
         var client = new XMLHttpRequest(),
             isTimeout = false,
             isComplete = false,
             method = options.method ? options.method.toLowerCase() : 'get',
             data = options.data,
+            timeout = options.timeout || 2000,
             before = options.before || function () {},
-            success = options.success || function () {},
+            load = options.load || function () {},
             error = options.error || function () {};
 
         if (method === 'get' && data) {
@@ -59,7 +67,7 @@ var Sherry = {
         client.onload = function () {
             if (!isComplete) {
                 if (!isTimeout && ((client.status >= 200 && client.status < 300) || client.status == 304)) {
-                    success(client);
+                    load(client);
                 }
                 else {
                     error(client);
@@ -79,7 +87,6 @@ var Sherry = {
         if (method === 'post') {client.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');}
         client.setRequestHeader('ajax', 'true');
         before(client);
-        client.send(data);
         setTimeout(function () {
             isTimeout = true;
             if (!isComplete) {
@@ -87,7 +94,8 @@ var Sherry = {
                 error(client);
                 isComplete = true;
             }
-        }, timeout || 2000);
+        }, timeout);
+        client.send(data);
     },
 
     jsonp: function (url, callback) {
@@ -102,6 +110,4 @@ var Sherry = {
         document.head.appendChild(script);
     }
 };
-
-var S = Sherry;
 
