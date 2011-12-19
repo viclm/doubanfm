@@ -88,6 +88,10 @@
 
     var slideshow = new S();
 
+    if (localStorage.albumfm) {
+        channelList.push({t: '专辑兆赫', v: -2});
+    }
+
     channelCurrent = Number(localStorage.channel);
     channelOrient(channelCurrent, channelList);
 

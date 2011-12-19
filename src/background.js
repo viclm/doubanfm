@@ -8,9 +8,10 @@
     var time = 0;
     var canplaythrough = false;
     var p = null;
-	var likedSongs = [];
+    var likedSongs = [];
+    var albumSongs = [];
 
-	localStorage.channel || (localStorage.channel = '1');
+    localStorage.channel || (localStorage.channel = '1');
     localStorage.notify || (localStorage.notify = '1');
     localStorage.lrc || (localStorage.lrc = '1');
     localStorage.autoplay || (localStorage.autoplay = '1');
@@ -263,6 +264,31 @@
         }
     });
 
+    chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
+        if (request.cmd === 'albumfm') {
+            albumSongs = [];
+            for (var i = 0, len = request.album.songs.length, song ; i < len ; i += 1) {
+                song = request.album.songs[i];
+                song.albumtitle = request.album.title;
+                song.picture = request.album.picture;
+                song.artist = request.album.artist;
+                song.url = 'http://otho.douban.com/view/song/small/p'+song.sid+'.mp3';
+                song.album = request.album.url;
+                albumSongs.push(song);
+            }
+            localStorage.albumfm = JSON.stringify(albumSongs);
+            localStorage.channel = '-2';
+            playList = playList.slice(0, current+1);
+            if (playList.length) {current += 1;}
+            fetchSongs(function () {
+                audio.src = playList[current].url;
+                audio.play();
+                isPlay = true;
+                chrome.browserAction.setIcon({path: '../assets/icon16_pause.png'});
+            });
+        }
+    });
+
     function getCurrentSongInfo() {
         var song = playList[current], info = {cmd: 'set'};
         info.title = song.title;
@@ -284,7 +310,17 @@
 
     function fetchSongs(fn) {
         var channel = localStorage.channel;
-        if (channel === '-1') {
+        if (channel === '-2') {
+            albumFm(fn);
+            if (h.length) {
+                h = h.slice(-20);
+                var type = h[h.length-1].slice(-1);
+                if (['b', 'u', 'r'].indexOf(type) > -1) {
+                    S.ajax('http://douban.fm/j/mine/playlist?type='+type+'&sid='+ h[h.length - 1].slice(1, -2) +'&h='+ h.join('') +'&channel=0&from=mainsite&r='+rand(), function () {});
+                }
+            }
+        }
+        else if (channel === '-1') {
             likedFm(fn);
             if (h.length) {
                 h = h.slice(-20);
@@ -373,6 +409,17 @@
                 }
             });
         }
+    }
+
+    function albumFm(fn) {
+        if (albumSongs.length) {
+            playList = playList.concat(albumSongs);
+        }
+        else if (localStorage.albumfm) {
+            albumSongs = JSON.parse(localStorage.albumfm);
+            playList = playList.concat(albumSongs);
+        }
+        fn && fn();
     }
 
     function channelCheck(channel, fn) {
