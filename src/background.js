@@ -78,8 +78,8 @@
         if (localStorage.notify === '1' && !p) {
             var notification = webkitNotifications.createNotification(
                 '../assets/icon48.png',
-                '即将播放',
-                playList[current].artist + ' ' + playList[current].title
+                playList[current].title,
+                playList[current].artist
             );
 
             notification.show();

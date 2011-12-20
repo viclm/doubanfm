@@ -171,9 +171,6 @@ var Winswitcher = (function (window, document, undefined) {
                 oauth.style.top = 0;
             }
             break;
-        case 'init':
-            
-            break;
         }
     });
 
@@ -309,7 +306,7 @@ var Winswitcher = (function (window, document, undefined) {
                 var pp = p;
                 setTimeout(function () {
                     pp.style.opacity = 1;
-                }, i*100);
+                }, i*50);
             })();
         }
         if (cascade) {
@@ -322,7 +319,7 @@ var Winswitcher = (function (window, document, undefined) {
                 var pp = p;
                 setTimeout(function () {
                     pp.style.opacity = 1;
-                }, i*100);
+                }, i*50);
             })();
         }
     }
@@ -369,7 +366,7 @@ var Winswitcher = (function (window, document, undefined) {
                 var pp = p;
                 setTimeout(function () {
                     pp.style.opacity = 1;
-                }, j*100);
+                }, j*50);
             })();
         }
     }
