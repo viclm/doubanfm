@@ -1,16 +1,7 @@
-(function (window, document, undefined) {
-    var isPlay = false;
-    var port = chrome.extension.connect({name: 'fm'});
-    var title = player.querySelector('h1');
-    var artist = player.querySelector('p');
-    var progress = player.querySelector('header div');
-    var soundCtr = player.querySelector('input[type=range]');
-    var channelCurrent = 0;
+var Winswitcher = (function (window, document, undefined) {
+    function Winswitcher(args) {
 
-
-    function S(args) {
-
-        this.$super.constructor.call(this, args);
+        this.superclass.constructor.call(this, args);
 
         this.slide = document.querySelector('body > div');
         this.btnPrev = left;
@@ -56,17 +47,17 @@
         this.btnNext.style.display = 'none';
     }
 
-    extend(S, Slideshow);
+    S.extend(Winswitcher, Slideshow);
 
-    S.prototype.moveTo = function (index) {
-        var res = this.$super.moveTo.call(this, index);
+    Winswitcher.prototype.moveTo = function (index) {
+        var res = this.superclass.moveTo.call(this, index);
         if (res > -1) {
             this.slide.style.left = -(res-1)*100+'%';
             this.setNav();
         }
     };
 
-    S.prototype.setNav = function () {
+    Winswitcher.prototype.setNav = function () {
         if (this.count === 1) {
             this.btnPrev.style.display = 'none';
             this.btnPrev.dataset.visible = 'hidden';
@@ -86,22 +77,41 @@
         }
     }
 
-    var slideshow = new S();
+    return Winswitcher;
+})(this, this.document);
 
-    if (localStorage.albumfm) {
-        channelList.push({t: '专辑兆赫', v: -2});
+(function (window, document, undefined) {
+    var isPlay = false;
+    var title = player.querySelector('h1');
+    var artist = player.querySelector('p');
+    var progress = player.querySelector('header div');
+    var soundCtr = player.querySelector('input[type=range]');
+    var channelCurrent = 0;
+    var port = chrome.extension.connect({name: 'fm'});
+
+    var winswitcher = new Winswitcher();
+
+    css();
+    window.addEventListener('resize', css, false);
+
+    function css() {
+        player.style.width = innerWidth + 'px';
+        channel.style.width = innerWidth + 'px';
+        list.style.width = innerWidth + 'px';
     }
 
-    channelCurrent = Number(localStorage.channel);
-    channelOrient(channelCurrent, channelList);
-
+    if (localStorage.albumfm) {
+                channelList.push({t: '专辑兆赫', v: -2});
+            }
+            channelCurrent = Number(localStorage.channel);
+            channelOrient(channelCurrent, channelList);
 
     port.postMessage({cmd: 'get'});
 
     port.onMessage.addListener(function (msg) {
         switch (msg.cmd) {
         case 'progress':
-            progress.style.width = msg.time / msg.length * 275 + 'px';
+            progress.style.width = msg.time / msg.length * window.innerWidth + 'px';
             progress.title = strftime(msg.time) + '/' + strftime(msg.length);
             if (msg.lrc) {
                 lrc.innerHTML = msg.lrc;
@@ -145,21 +155,24 @@
                 lrc.innerHTML = '';
             }
             break;
+        case 'error':
+            alert('您当前网速很慢', message);
+            break;
         case 'channel':
             if (msg.channel) {
                 var c = channel.querySelector('.active');
                 if (c) {c.className = ''}
                 channelCurrent = msg.channel.v;
                 channelOrient(channelCurrent, channelList);
-                slideshow.next();
+                winswitcher.next();
                 alert('切换至 ' + msg.channel.t, message);
             }
             else {
                 oauth.style.top = 0;
             }
             break;
-        case 'error':
-            alert('您当前网速很慢', message);
+        case 'init':
+            
             break;
         }
     });
@@ -334,7 +347,7 @@
     delegate(list, 'p', 'click', function () {
         if (this.className !== 'active') {
             port.postMessage({cmd: 'index', index: Number(this.dataset.index)});
-            slideshow.prev();
+            winswitcher.prev();
         }
     });
 
@@ -395,14 +408,6 @@
             }, false);
             delegate.nodeList.push(node);
         }
-    }
-
-    function extend(childCtor, parentCtor) {
-        function tempCtor() {};
-        tempCtor.prototype = parentCtor.prototype;
-        childCtor.prototype = new tempCtor();
-        childCtor.prototype.$super = parentCtor.prototype;
-        childCtor.prototype.constructor = childCtor;
     }
 
 })(this, this.document);

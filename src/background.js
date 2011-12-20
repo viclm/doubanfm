@@ -1,4 +1,10 @@
 
+    localStorage.channel || (localStorage.channel = '1');
+    localStorage.notify || (localStorage.notify = '1');
+    localStorage.lrc || (localStorage.lrc = '1');
+    localStorage.autoplay || (localStorage.autoplay = '1');
+    localStorage.pin || (localStorage.pin = '0');
+
     var audio = document.querySelector('audio');
     var isPlay = localStorage.autoplay === '1';
     var isRepeat = false;
@@ -11,11 +17,24 @@
     var likedSongs = [];
     var albumSongs = [];
 
-    localStorage.channel || (localStorage.channel = '1');
-    localStorage.notify || (localStorage.notify = '1');
-    localStorage.lrc || (localStorage.lrc = '1');
-    localStorage.autoplay || (localStorage.autoplay = '1');
-
+    if (localStorage.pin === '0') {
+        chrome.browserAction.setPopup({popup: '../pages/popup.html'});
+    }
+    else {
+        chrome.browserAction.onClicked.addListener(function(tab) {
+            if (p) {
+                chrome.windows.update(p.tab.windowId, {focused: true});
+            }
+            else {
+                chrome.windows.create({
+                    width: 285,
+                    height: 303,
+                    url: '../pages/popup.html',
+                    type: 'popup'
+                });
+            }
+        });
+    }
 
     function parseLrc(lrc) {
         lrc = lrc.split('\n');
@@ -214,6 +233,7 @@
                 case 'get':
                     if (playList.length) {
                         port.postMessage(getCurrentSongInfo());
+                        port.postMessage({cmd: 'init', channel: Number(localStorage.channel), albumfm: localStorage.albumfm ? JSON.parse(localStorage.albumfm) : false});
                     }
                     else {
                         channelCheck(Number(localStorage.channel), function (status, error) {
@@ -225,6 +245,7 @@
                                         chrome.browserAction.setIcon({path: '../assets/icon16_pause.png'});
                                     }
                                     port.postMessage(getCurrentSongInfo());
+                                    port.postMessage({cmd: 'init', channel: Number(localStorage.channel), albumfm: localStorage.albumfm ? JSON.parse(localStorage.albumfm) : false});
                                 });
                             }
                             else {
