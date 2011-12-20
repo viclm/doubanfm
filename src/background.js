@@ -306,6 +306,7 @@
                 audio.play();
                 isPlay = true;
                 chrome.browserAction.setIcon({path: '../assets/icon16_pause.png'});
+                if (p) {p.postMessage(getCurrentSongInfo());}
             });
         }
     });
