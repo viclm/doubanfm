@@ -82,12 +82,16 @@ var Winswitcher = (function (window, document, undefined) {
 
 (function (window, document, undefined) {
     var isPlay = false;
+    var port = chrome.extension.connect({name: 'fm'});
+
     var title = player.querySelector('h1');
     var artist = player.querySelector('p');
     var progress = player.querySelector('header div');
     var soundCtr = player.querySelector('input[type=range]');
+
     var channelCurrent = 0;
-    var port = chrome.extension.connect({name: 'fm'});
+
+    var trueList = list.querySelector('section');
 
     var winswitcher = new Winswitcher();
 
@@ -212,6 +216,46 @@ var Winswitcher = (function (window, document, undefined) {
         port.postMessage({cmd: 'prev'});
         e.preventDefault();
     }, false);
+
+    document.body.addEventListener('keyup', function (e) {
+        switch (e.keyCode) {
+        case 37:
+            port.postMessage({cmd: 'prev'});
+            break;
+        case 38:
+            break;
+        case 39:
+            port.postMessage({cmd: 'next'});
+        case 40:
+            break;
+        case 32:
+            if (isPlay) {
+                play.style.backgroundImage = 'url(../assets/play.png)';
+            }
+            else {
+                play.style.backgroundImage = 'url(../assets/pause.png)';
+            }
+            isPlay = !isPlay;
+            port.postMessage({cmd: 'switch', isPlay: isPlay});
+            break;
+        }
+    });
+
+    document.body.addEventListener('keydown', function (e) {
+        switch (e.keyCode) {
+        case 38:
+            soundCtr.value += 5;
+            port.postMessage({cmd: 'volume', value: soundCtr.value});
+            break;
+        case 40:
+            soundCtr.value -= 5;
+            port.postMessage({cmd: 'volume', value: soundCtr.value});
+            break;
+        case 9:
+            e.preventDefault();
+            break;
+        }
+    });
 
     sound.addEventListener('click', function (e) {
         if (soundCtr.style.display !== 'block') {
@@ -348,27 +392,38 @@ var Winswitcher = (function (window, document, undefined) {
         }
     });
 
+    list.addEventListener('mousewheel', function (e) {
+        var matrix = new WebKitCSSMatrix(window.getComputedStyle(trueList).webkitTransform);
+        trueList.style.webkitTransform = matrix.translate(0, e.wheelDelta);
+    }, false);
+
+    trueList.addEventListener('webkitTransitionEnd', function (e) {
+        var matrix = new WebKitCSSMatrix(window.getComputedStyle(trueList).webkitTransform),
+            height = trueList.scrollHeight - window.innerHeight;
+        if (height < 0) {height = 0;}
+        if (matrix.f > 0) {
+            trueList.style.webkitTransform = 'translate(0, 0)';
+        }
+        if (matrix.f < -height) {
+            trueList.style.webkitTransform = 'translate(0, -'+height+'px)';
+        }
+    }, false);
+
 
     function listFlush(playList, current) {
-        var i = current - 5 < 0 ? 0 : current - 5,
-        len = current + 6 > playList.length ? playList.length : current + 6,
-        p,
-        j = 0;
-        list.innerHTML = '';
+        var i = 0,
+        len = playList.length,
+        p;
+        trueList.innerHTML = '';
         for (; i < len ; i += 1) {
             p = document.createElement('p');
             p.dataset.index = i;
             if (current === i) {p.className = 'active';}
             p.innerHTML = playList[i].title + ' - ' + playList[i].artist;
-            list.appendChild(p);
-            j++;
-            (function () {
-                var pp = p;
-                setTimeout(function () {
-                    pp.style.opacity = 1;
-                }, j*50);
-            })();
+            trueList.appendChild(p);
         }
+        var offset = (current+1) * p.offsetHeight - window.innerHeight / 2;
+        trueList.style.webkitTransform = 'translate(0, -'+offset+'px)';
     }
 
 

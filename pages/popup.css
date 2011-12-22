@@ -26,7 +26,7 @@ body > div > div {
     float: left;
 }
 
-header, footer, section {
+header, footer, #player section {
     background-color: rgba(0, 0, 0, 0.5);
     padding: 5px 10px 10px 10px;
 }
@@ -58,6 +58,7 @@ a {
     display: inline-block;
     width: 25px;
     height: 25px;
+    cursor: pointer;
 }
 
 #doubanlink {
@@ -155,7 +156,7 @@ input[type=range]::-webkit-slider-thumb {
     color: #f00ea0;
 }
 
-#channel p, #list p {
+#channel p {
     float: left;
     background-color: rgba(0, 0, 0, 0.5);
     line-height: 36px;
@@ -178,16 +179,20 @@ input[type=range]::-webkit-slider-thumb {
     background-color: rgba(19, 159, 208, 0.5);
 }
 
+#list section{
+    -webkit-transition: -webkit-transform 0.2s;
+    -webkit-transform: translate(0, 0);
+}
+
 #list p {
+    cursor: pointer;
+    background-color: rgba(0, 0, 0, 0.5);
     line-height: 24px;
     margin: 1px 0 0 0;
     box-sizing: border-box;
     cursor: pointer;
     padding-left: 20px;
     width: 100%;
-    border: none;
-    float: none;
-    text-align: left;
 }
 
 
