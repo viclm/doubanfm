@@ -301,6 +301,7 @@
             localStorage.channel = '-2';
             playList = playList.slice(0, current+1);
             if (playList.length) {current += 1;}
+            if (p) {p.postMessage({cmd: 'channel', channel: {t: '专辑频道', v: -2, title: request.album.title}});}
             fetchSongs(function () {
                 audio.src = playList[current].url;
                 audio.play();
@@ -436,12 +437,13 @@
     function albumFm(fn) {
         if (albumSongs.length) {
             playList = playList.concat(albumSongs);
+            fn && fn();
         }
         else if (localStorage.albumfm) {
             albumSongs = JSON.parse(localStorage.albumfm);
             playList = playList.concat(albumSongs);
+            fn && fn();
         }
-        fn && fn();
     }
 
     function channelCheck(channel, fn) {

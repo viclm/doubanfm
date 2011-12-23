@@ -105,10 +105,10 @@ var Winswitcher = (function (window, document, undefined) {
     }
 
     if (localStorage.albumfm) {
-                channelList.push({t: '专辑兆赫', v: -2});
-            }
-            channelCurrent = Number(localStorage.channel);
-            channelOrient(channelCurrent, channelList);
+        channelList.push({t: '专辑兆赫', v: -2, title: JSON.parse(localStorage.albumfm).title});
+    }
+    channelCurrent = Number(localStorage.channel);
+    channelOrient(channelCurrent, channelList);
 
     port.postMessage({cmd: 'get'});
 
@@ -166,10 +166,13 @@ var Winswitcher = (function (window, document, undefined) {
             if (msg.channel) {
                 var c = channel.querySelector('.active');
                 if (c) {c.className = ''}
+                if (msg.channel.title && channel.querySelectorAll('p').length === 3) {
+                    channelList.push(msg.channel);
+                }
                 channelCurrent = msg.channel.v;
                 channelOrient(channelCurrent, channelList);
-                winswitcher.next();
-                alert('切换至 ' + msg.channel.t, message);
+                winswitcher.moveTo(2);
+                alert('切换至 ' + (msg.channel.title ? msg.channel.title : msg.channel.t), message);
             }
             else {
                 oauth.style.top = 0;
@@ -372,11 +375,11 @@ var Winswitcher = (function (window, document, undefined) {
         for (var i = 0, len = list.length ; i < len ; i += 1) {
             if (list[i].v === v) {
                 channelFlush(list, index);
-                return index ? index + '|' + i : i;
+                return index ? index + '|' + i : i.toString();
             }
 
             if (list[i].sub) {
-                var res = channelOrient(v, list[i].sub, index ? index + '|' + i : i);
+                var res = channelOrient(v, list[i].sub, index ? index + '|' + i : i.toString());
                 if (res) {
                     return res;
                 }
