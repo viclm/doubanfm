@@ -75,17 +75,35 @@
                 }
             });
         }
-        if (localStorage.notify === '1' && !p) {
-            var notification = webkitNotifications.createNotification(
-                '../assets/icon48.png',
-                playList[current].title,
-                playList[current].artist
-            );
+        if (localStorage.notify === '1') {
+            if (!p) {
+                var notification = webkitNotifications.createNotification(
+                    '../assets/icon48.png',
+                    playList[current].title,
+                    playList[current].artist
+                );
 
-            notification.show();
-            setTimeout(function () {
-                notification.cancel();
-            }, 5000);
+                notification.show();
+                setTimeout(function () {
+                    notification.cancel();
+                }, 5000);
+            }
+            else if (p.tab) {
+                chrome.windows.get(p.tab.windowId, function (win) {
+                    if (!win.focused) {
+                        var notification = webkitNotifications.createNotification(
+                            '../assets/icon48.png',
+                            playList[current].title,
+                            playList[current].artist
+                        );
+
+                        notification.show();
+                        setTimeout(function () {
+                            notification.cancel();
+                        }, 5000);
+                    }
+                });
+            }
         }
         chrome.browserAction.setTitle({title: playList[current].title+'-'+playList[current].artist});
         if (!playList[current + 1]) {fetchSongs();}
@@ -301,6 +319,7 @@
             localStorage.channel = '-2';
             playList = playList.slice(0, current+1);
             if (playList.length) {current += 1;}
+            if (p) {p.postMessage({cmd: 'channel', channel: {t: '专辑频道', v: -2, title: request.album.title}});}
             fetchSongs(function () {
                 audio.src = playList[current].url;
                 audio.play();
@@ -436,12 +455,13 @@
     function albumFm(fn) {
         if (albumSongs.length) {
             playList = playList.concat(albumSongs);
+            fn && fn();
         }
         else if (localStorage.albumfm) {
             albumSongs = JSON.parse(localStorage.albumfm);
             playList = playList.concat(albumSongs);
+            fn && fn();
         }
-        fn && fn();
     }
 
     function channelCheck(channel, fn) {
@@ -491,4 +511,4 @@
         return str;
     }
 
-    S.ajax('http://douban.fm/mine?type=liked&start=0', function () {});
+    S.ajax('http://douban.fm/mine?type=liked&start=0', function(){});
