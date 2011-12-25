@@ -180,8 +180,9 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 #list section{
-    -webkit-transition: -webkit-transform 0.2s;
-    -webkit-transform: translate(0, 0);
+    position: absolute;
+    width: 100%;
+    top: 0px;
 }
 
 #list p {
@@ -191,8 +192,11 @@ input[type=range]::-webkit-slider-thumb {
     margin: 1px 0 0 0;
     box-sizing: border-box;
     cursor: pointer;
-    padding-left: 20px;
+    padding: 0 20px;
     width: 100%;
+    white-space:nowrap;
+    overflow: hidden;
+    text-overflow:ellipsis;
 }
 
 

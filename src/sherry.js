@@ -46,7 +46,10 @@ Sherry = S = {
         if (typeof options === 'function') {
             options = {
                 load: options
-            }
+            };
+        }
+        else if (typeof options === 'undefined') {
+            options = {};
         }
 
         var client = new XMLHttpRequest(),

@@ -11,12 +11,12 @@ var Winswitcher = (function (window, document, undefined) {
 
         var self = this;
 
-        this.btnPrev.addEventListener('click', function (e) {
+        this.btnPrev.addEventListener('mouseover', function (e) {
             self.prev();
             e.preventDefault();
         }, false);
 
-        this.btnNext.addEventListener('click', function (e) {
+        this.btnNext.addEventListener('mouseover', function (e) {
             self.next();
             e.preventDefault();
         }, false);
@@ -399,20 +399,12 @@ var Winswitcher = (function (window, document, undefined) {
     });
 
     list.addEventListener('mousewheel', function (e) {
-        var matrix = new WebKitCSSMatrix(window.getComputedStyle(trueList).webkitTransform);
-        trueList.style.webkitTransform = matrix.translate(0, e.wheelDelta);
-    }, false);
-
-    trueList.addEventListener('webkitTransitionEnd', function (e) {
-        var matrix = new WebKitCSSMatrix(window.getComputedStyle(trueList).webkitTransform),
-            height = trueList.scrollHeight - window.innerHeight;
-        if (height < 0) {height = 0;}
-        if (matrix.f > 0) {
-            trueList.style.webkitTransform = 'translate(0, 0)';
-        }
-        if (matrix.f < -height) {
-            trueList.style.webkitTransform = 'translate(0, -'+height+'px)';
-        }
+        var top = parseInt(getComputedStyle(trueList).getPropertyValue('top'), 10) + (e.wheelDelta>0?1:-1)*window.innerHeight/5;
+        var height = trueList.scrollHeight - window.innerHeight;
+        if (height <= 0) {return;}
+        if (top > 0) {top = 0;}
+        else if (top < -height) {top = -height;}
+        trueList.style.top = top + 'px'
     }, false);
 
 
@@ -429,7 +421,7 @@ var Winswitcher = (function (window, document, undefined) {
             trueList.appendChild(p);
         }
         var offset = (current+1) * p.offsetHeight - window.innerHeight / 2;
-        trueList.style.webkitTransform = 'translate(0, -'+offset+'px)';
+        trueList.style.top = -offset+'px';
     }
 
 
