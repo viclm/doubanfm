@@ -63,9 +63,9 @@
                 for (var i = 0, len = data.length ; i < len ; i += 1) {
                     if (playList[current].artist.indexOf(data[i].artistname) > -1) {
                         S.ajax('http://ting.baidu.com/data/music/songlink?type=aac&speed=&songIds=' + data[i].songid, function (client) {
-                            var lrcLink = JSON.parse(client.responseText).data.songList[0].lrcLink;
-                            if (lrcLink) {
-                                S.ajax('http://ting.baidu.com'+lrcLink, function (client) {
+                            var song = JSON.parse(client.responseText).data.songList[0];
+                            if (song) {
+                                S.ajax('http://ting.baidu.com'+song.lrcLink, function (client) {
                                     playList[current].lrc = parseLrc(client.responseText);
                                 });
                             }
@@ -367,6 +367,7 @@
                 else if (channel === '-1') {
                     likedFm(fn);
                 }
+                if (p && !fn) {p.postMessage(getCurrentSongInfo());}
             }
         }
         else {
@@ -385,7 +386,8 @@
                             playList.push(client.song[i]);
                         }
                     }
-                    fn && fn();
+                    if (fn) {fn();}
+                    else if (p) {p.postMessage(getCurrentSongInfo());}
                 },
                 error: function (client) {
                     if (p) {p.postMessage({cmd: 'error'})}

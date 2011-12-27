@@ -11,14 +11,28 @@ var Winswitcher = (function (window, document, undefined) {
 
         var self = this;
 
+        var hover = false;
+
         this.btnPrev.addEventListener('mouseover', function (e) {
-            self.prev();
-            e.preventDefault();
+            hover = true;
+            setTimeout(function () {
+                if (hover) {self.prev();}
+            }, 500);
+        }, false);
+
+        this.btnPrev.addEventListener('mouseout', function (e) {
+            hover = false;
         }, false);
 
         this.btnNext.addEventListener('mouseover', function (e) {
-            self.next();
-            e.preventDefault();
+            hover = true;
+            setTimeout(function () {
+                if (hover) {self.next();}
+            }, 500);
+        }, false);
+
+        this.btnNext.addEventListener('mouseout', function (e) {
+            hover = false;
         }, false);
 
         document.body.addEventListener('mouseover', function () {
@@ -421,6 +435,7 @@ var Winswitcher = (function (window, document, undefined) {
             trueList.appendChild(p);
         }
         var offset = (current+1) * p.offsetHeight - window.innerHeight / 2;
+        if (offset < 0) {offset = 0;}
         trueList.style.top = -offset+'px';
     }
 
