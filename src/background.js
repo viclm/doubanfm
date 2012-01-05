@@ -2,11 +2,11 @@
     localStorage.channel || (localStorage.channel = '1');
     localStorage.notify || (localStorage.notify = '1');
     localStorage.lrc || (localStorage.lrc = '1');
-    localStorage.autoplay || (localStorage.autoplay = '1');
     localStorage.pin || (localStorage.pin = '0');
+    localStorage.volume || (localStorage.volume = '100');
 
     var audio = document.querySelector('audio');
-    var isPlay = localStorage.autoplay === '1';
+    var isPlay = true;
     var isRepeat = false;
     var playList = [];
     var h = [];
@@ -59,7 +59,7 @@
         p && p.postMessage({cmd: 'canplaythrough', status: false});
         if (localStorage.lrc === '1' && !playList[current].lrc) {
             S.jsonp('http://openapi.baidu.com/public/2.0/mp3/info/suggestion?format=json&word='+encodeURIComponent(playList[current].title.replace(/\(.+\)$/, ''))+'&callback=', function (data) {
-                data = data.song;
+                data = JSON.parse(data).song;
                 for (var i = 0, len = data.length ; i < len ; i += 1) {
                     if (playList[current].artist.indexOf(data[i].artistname) > -1) {
                         S.ajax('http://ting.baidu.com/data/music/songlink?type=aac&speed=&songIds=' + data[i].songid, function (client) {
@@ -210,6 +210,7 @@
                     break;
                 case 'volume':
                     audio.volume = msg.value / 100;
+                    localStorage.volume = msg.value;
                     break;
                 case 'repeat':
                     isRepeat = msg.status;
@@ -261,6 +262,7 @@
                                 fetchSongs('n', function () {
                                     audio.src = playList[0].url;
                                     if (isPlay) {
+                                        audio.volume = Number(localStorage.volume) / 100;
                                         audio.play();
                                         chrome.browserAction.setIcon({path: '../assets/icon16_pause.png'});
                                     }
