@@ -59,7 +59,7 @@
         p && p.postMessage({cmd: 'canplaythrough', status: false});
         if (localStorage.lrc === '1' && !playList[current].lrc) {
             S.jsonp('http://openapi.baidu.com/public/2.0/mp3/info/suggestion?format=json&word='+encodeURIComponent(playList[current].title.replace(/\(.+\)$/, ''))+'&callback=', function (data) {
-                data = JSON.parse(data).song;
+                data = data.song;
                 for (var i = 0, len = data.length ; i < len ; i += 1) {
                     if (playList[current].artist.indexOf(data[i].artistname) > -1) {
                         S.ajax('http://ting.baidu.com/data/music/songlink?type=aac&speed=&songIds=' + data[i].songid, function (client) {
