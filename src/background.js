@@ -27,8 +27,8 @@
             }
             else {
                 chrome.windows.create({
-                    width: 285,
-                    height: 303,
+                    width: 300,
+                    height: 320,
                     url: '../pages/popup.html',
                     type: 'popup'
                 });
