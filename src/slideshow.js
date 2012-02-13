@@ -13,7 +13,7 @@
     * @param {Integer} [step=1] The step of slideshow moves
     */
     function Slideshow(args) {
-        var args = arguments[0] || {};
+        args = arguments[0] || {};
 
         this.gap = args.gap || 5000;
         this.length = args.length;
