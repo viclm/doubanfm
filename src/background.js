@@ -60,6 +60,7 @@
         if (localStorage.lrc === '1' && !playList[current].lrc) {
             S.jsonp('http://openapi.baidu.com/public/2.0/mp3/info/suggestion?format=json&word='+encodeURIComponent(playList[current].title.replace(/\(.+\)$/, ''))+'&callback=', function (data) {
                 data = data.song;
+                if (!data) {return;}
                 for (var i = 0, len = data.length ; i < len ; i += 1) {
                     if (playList[current].artist.indexOf(data[i].artistname) > -1) {
                         S.ajax('http://ting.baidu.com/data/music/songlink?type=aac&speed=&songIds=' + data[i].songid, function (client) {
@@ -88,7 +89,7 @@
                     notification.cancel();
                 }, 5000);
             }
-            else if (p.tab) {
+            else if (p.tab && p.tab.id !== -1) {
                 chrome.windows.get(p.tab.windowId, function (win) {
                     if (!win.focused) {
                         var notification = webkitNotifications.createNotification(
@@ -383,7 +384,7 @@
                     for (var i = 0, len = client.song.length ; i < len ; i += 1) {
                         if (/^\d+$/.test(client.song[i].sid)) {
                             client.song[i].picture = client.song[i].picture.replace('mpic', 'lpic');
-                            client.song[i].url = 'http://otho.douban.com/view/song/small/p'+client.song[i].sid+'.mp3';
+                            //client.song[i].url = 'http://otho.douban.com/view/song/small/p'+client.song[i].sid+'.mp3';
                             client.song[i].album = 'http://music.douban.com'+client.song[i].album;
                             playList.push(client.song[i]);
                         }
