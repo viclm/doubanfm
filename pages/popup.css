@@ -8,11 +8,12 @@ body {
 }
 
 body > div {
-    width: 300%;
+    width: 200%;
     height: 100%;
-    position: absolute;
+    position: relative;
+    overflow: hidden;
     -webkit-transition: left .5s;
-    left: -100%;
+    left: 0;
 }
 
 body > div > div {
@@ -150,10 +151,14 @@ input[type=range]::-webkit-slider-thumb {
     right: 0;
     bottom: 40px;
     padding: 0 5px;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.75);
     opacity: 0;
     -webkit-transition: opacity 1s;
-    color: #f00ea0;
+    color: white;
+    outline: none;
+    -webkit-border-radius: 0;
+    border: none;
+    z-index: 100;
 }
 
 #channel p {
@@ -167,7 +172,6 @@ input[type=range]::-webkit-slider-thumb {
     border: 1px solid white;
     cursor: pointer;
     -webkit-transition: opacity 0.5s;
-    opacity: 0;
 }
 
 #channel p:hover, #list p:hover {
@@ -177,6 +181,7 @@ input[type=range]::-webkit-slider-thumb {
 
 #channel p.active, #list p.active {
     background-color: rgba(19, 159, 208, 0.5);
+    cursor:normal;
 }
 
 #list section{

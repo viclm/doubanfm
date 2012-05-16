@@ -6,8 +6,8 @@ var Winswitcher = (function (window, document, undefined) {
         this.slide = document.querySelector('body > div');
         this.btnPrev = left;
         this.btnNext = right;
-        this.count = 2;
-        this.length = 3;
+        this.count = 1;
+        this.length = 2;
 
         var self = this;
 
@@ -56,12 +56,12 @@ var Winswitcher = (function (window, document, undefined) {
             self.btnNext.style.display = 'none';
         }, false);
 
-        this.setNav();
+        this.setNav();  
         this.btnPrev.style.display = 'none';
         this.btnNext.style.display = 'none';
     }
 
-    S.extend(Winswitcher, Slideshow);
+    extend(Winswitcher, Slideshow);
 
     Winswitcher.prototype.moveTo = function (index) {
         var res = this.superclass.moveTo.call(this, index);
@@ -95,17 +95,8 @@ var Winswitcher = (function (window, document, undefined) {
 })(this, this.document);
 
 (function (window, document, undefined) {
-    var isPlay = false;
-    var port = chrome.extension.connect({name: 'fm'});
 
-    var title = player.querySelector('h1');
-    var artist = player.querySelector('p');
-    var progress = player.querySelector('header div');
-    var soundCtr = player.querySelector('input[type=range]');
 
-    var channelCurrent = 0;
-
-    var trueList = list.querySelector('section');
 
     var winswitcher = new Winswitcher();
 
@@ -114,365 +105,312 @@ var Winswitcher = (function (window, document, undefined) {
 
     function css() {
         player.style.width = innerWidth + 'px';
-        channel.style.width = innerWidth + 'px';
         list.style.width = innerWidth + 'px';
     }
 
-    if (localStorage.albumfm) {
-        channelList.push({t: '专辑兆赫', v: -2, title: JSON.parse(localStorage.albumfm)[0].albumtitle});
-    }
-    channelCurrent = Number(localStorage.channel);
-    channelOrient(channelCurrent, channelList);
+    var PlayerUI = Class({
 
-    port.postMessage({cmd: 'get'});
+        init: function () {
 
-    port.onMessage.addListener(function (msg) {
-        switch (msg.cmd) {
-        case 'progress':
-            progress.style.width = msg.time / msg.length * window.innerWidth + 'px';
-            progress.title = strftime(msg.time) + '/' + strftime(msg.length);
+            var self = this;
+
+            this.isPlay = false;
+
+            this.port = chrome.extension.connect({name: 'fm'});
+            this.port.postMessage({cmd: 'get'});
+            this.port.onMessage.addListener(function (msg) {
+                switch (msg.cmd) {
+                case 'progress':
+                    self.onProgress(msg);
+                    break;
+                case 'set':
+                    self.onSet(msg);
+                    break;
+                case 'canplaythrough':
+                    self.onCanplaythrough(msg);
+                    break;
+                case 'error':
+                    //alert('您当前网速很慢', message);
+                    break;
+                case 'channel':
+                    self.onChannel(msg)
+                    break;
+                }
+            });
+
+
+            this.player = $('#player');
+            this.list = $('#list');
+
+            this.progress = this.player.find('header div');
+            this.title = this.player.find('h1');
+            this.artist = this.player.find('section p');
+            this.doubanlink = $('#doubanlink');
+            this.channel = $('#message');
+            this.play = $('#play');
+            this.love = $('#love');
+            this.repeat = $('#repeat');
+            this.soundCtr = this.player.find('input[type=range]');
+            this.loading = $('#loading');
+            this.oauth = $('#oauth');
+
+            this.progress.parent().click(function (e) {
+                self.port.postMessage({cmd: 'skip', rate: e.offsetX/275});
+            }, false);
+
+            this.play.bind('click', function (e) {
+                self.switch();
+                e.preventDefault();
+            }, false);
+
+            this.player.bind('contextmenu', function (e) {
+                self.switch();
+                e.preventDefault();
+            }, false);
+
+            this.player
+            .mouseover(function (e) {
+                self.channel.css('opacity', 1);
+            }).mouseout(function () {
+                self.channel.css('opacity', 0);
+            });
+
+            this.player.find('#prev').click(function (e) {
+                self.port.postMessage({cmd: 'prev'});
+                e.preventDefault();
+            }, false);
+
+            this.player.find('#next').click(function (e) {
+                self.port.postMessage({cmd: 'next'});
+                e.preventDefault();
+            }, false);
+
+            this.player.find('#sound').click(function (e) {
+                self.soundCtr.toggle();
+                e.preventDefault();
+            }, false);
+
+            this.soundCtr.bind('change', function (e) {
+                self.port.postMessage({cmd: 'volume', value: e.target.value});
+            }, false);
+
+            this.player.find('#repeat').click(function (e) {
+                if (this.className === 'on') {
+                    this.className = '';
+                    self.port.postMessage({cmd: 'repeat', status: false});
+                }
+                else {
+                    this.className = 'on';
+                    self.port.postMessage({cmd: 'repeat', status: true});
+                }
+                e.preventDefault();
+            }, false);
+
+            this.player.find('#love').click(function (e) {
+                if (this.className === 'on') {
+                    this.className = '';
+                    self.port.postMessage({cmd: 'love', status: false});
+                }
+                else {
+                    this.className = 'on';
+                    self.port.postMessage({cmd: 'love', status: true});
+                }
+                e.preventDefault();
+            }, false);
+
+            this.player.find('#trash').click(function (e) {
+                self.port.postMessage({cmd: 'trash'});
+            }, false);
+
+
+            $(document).keyup(function (e) {
+                switch (e.keyCode) {
+                case 37:
+                    self.port.postMessage({cmd: 'prev'});
+                    break;
+                case 38:
+                    self.soundCtr.val(self.soundCtr.val() + 5);
+                    self.port.postMessage({cmd: 'volume', value: self.soundCtr.val()});
+                    break;
+                case 39:
+                    self.port.postMessage({cmd: 'next'});
+                    break;
+                case 40:
+                    self.soundCtr.val(self.soundCtr.val() - 5);
+                    self.port.postMessage({cmd: 'volume', value: self.soundCtr.val()});
+                    break;
+                case 32:
+                    self.switch();
+                    break;
+                case 9:
+                    e.preventDefault();
+                    break;
+                }
+            });
+
+
+            this.channelInit();
+
+            this.channel.change(function (e) {
+                self.port.postMessage({cmd: 'channel', channel: Number(e.target.value)});
+            });
+
+            this.list.delegate('p', 'click', function () {
+                if (this.className !== 'active') {
+                    self.port.postMessage({cmd: 'index', index: Number(this.dataset.index)});
+                    winswitcher.prev();
+                }
+            });
+
+            this.list.bind('mousewheel', function (e) {
+                var trueList = self.list.find('section')[0];
+                var top = parseInt(getComputedStyle(trueList).getPropertyValue('top'), 10) + (e.wheelDelta>0?1:-1)*window.innerHeight/5;
+                var height = trueList.scrollHeight - window.innerHeight;
+                if (height <= 0) {return;}
+                if (top > 0) {top = 0;}
+                else if (top < -height) {top = -height;}
+                trueList.style.top = top + 'px'
+            }, false);
+
+            this.oauth.find('a').click(function (e) {
+                if (e.target.innerHTML === '确定') {
+                    window.open('http://douban.fm/');
+                }
+                self.oauth.css('top', '100%');
+                e.preventDefault();
+            });
+        },
+
+        switch: function () {
+            var self = this;
+            this.isPlay = !this.isPlay;
+            if (this.isPlay) {
+                this.play.css('backgroundImage', 'url(../assets/pause.png)');
+            }
+            else {
+                this.play.css('backgroundImage', 'url(../assets/play.png)');
+            }
+            this.port.postMessage({cmd: 'switch', isPlay: self.isPlay});
+        },
+
+        onProgress: function (msg) {
+            this.progress.width(msg.time / msg.length * window.innerWidth);
+            this.progress.attr('title', strftime(msg.time) + '/' + strftime(msg.length));
             if (msg.lrc) {
                 lrc.innerHTML = msg.lrc;
             }
-            break;
-        case 'set':
-            title.innerHTML = msg.title;
-            artist.innerHTML = msg.artist + ' | ' + msg.albumtitle;
-            doubanlink.href = msg.album;
-            progress.title = strftime(msg.time) + '/' + strftime(msg.length);
-            progress.style.width = msg.time / msg.length * 275 + 'px';
-            player.style.backgroundImage = 'url('+ msg.picture +')';
-            channel.style.backgroundImage = 'url('+ msg.picture +')';
-            list.style.backgroundImage = 'url('+ msg.picture +')';
-            soundCtr.value = msg.volume * 100;
+        },
+
+        onSet: function (msg) {
+            var self = this;
+            this.title.html(msg.title);
+            this.artist.html(msg.artist + ' | ' + msg.albumtitle);
+            this.doubanlink.attr('url', msg.album);
+            this.progress.attr('title', strftime(msg.time) + '/' + strftime(msg.length));
+            this.progress.width(msg.time / msg.length * 275);
+            this.player.css('backgroundImage', 'url('+ msg.picture +')');
+            this.list.css('backgroundImage', 'url('+ msg.picture +')');
+            this.soundCtr.val(msg.volume * 100);
             if (msg.like === '1') {love.className = 'on';}
             else {love.className = '';}
             if (msg.isRepeat) {repeat.className = 'on';}
             else {repeat.className = '';}
-            isPlay = msg.isPlay;
-            if (isPlay) {
-                play.style.backgroundImage = 'url(../assets/pause.png)';
+            this.isPlay = msg.isPlay;
+            if (this.isPlay) {
+                this.play.css('backgroundImage', 'url(../assets/pause.png)');
             }
             else {
-                play.style.backgroundImage = 'url(../assets/play.png)';
+                this.play.css('backgroundImage', 'url(../assets/play.png)');
             }
 
             if (!msg.canplaythrough){
-                loading.style.display = 'block';
+                this.loading.show();
             }
 
-            listFlush(msg.list, Number(msg.current));
-            break;
-        case 'canplaythrough':
+            this.channel.val(msg.channel);
+            this.channel.css('opacity', 1);
+            setTimeout(function () {
+                self.channel.css('opacity', 0);
+            }, 3000);
+
+            this.listUpdate(msg.list, Number(msg.current));
+        },
+
+        progress: function () {
+        },
+
+        onCanplaythrough: function (msg) {
             if (msg.status) {
-                loading.style.display = 'none';
+                this.loading.hide();
             }
             else {
-                loading.style.display = 'block';
-                progress.style.width = 0;
+                this.loading.show();
+                this.progress.width(0);
                 lrc.innerHTML = '';
             }
-            break;
-        case 'error':
-            alert('您当前网速很慢', message);
-            break;
-        case 'channel':
-            if (msg.channel) {
-                var c = channel.querySelector('.active');
-                if (c) {c.className = ''}
-                if (msg.channel.title) {
-                    channelList[3] = msg.channel;
-                }
-                channelCurrent = msg.channel.v;
-                channelOrient(channelCurrent, channelList);
-                winswitcher.moveTo(2);
-                //alert('切换至 ' + (msg.channel.title ? msg.channel.title : msg.channel.t), message);
+        },
+
+        onChannel: function (msg) {
+            var self = this;
+            if (typeof msg.channel !== 'undefined') {
+                this.channel.val(msg.channel);
+                this.channel.css('opacity', 1);
+                setTimeout(function () {
+                    self.channel.css('opacity', 0);
+                }, 3000);
             }
             else {
-                oauth.style.top = 0;
+                this.oauth.css('top', '0');
             }
-            break;
+        },
+
+        channelInit: function () {
+            for (var i = 0, len = channelList.length, p ; i < len ; i += 1) {
+                p = $('<option>');
+                p.attr('value', channelList[i].channel_id);
+                p.html(channelList[i].name);
+                this.channel.append(p);
+            }
+            this.channel.val(localStorage.channel)
+        },
+
+        listUpdate: function(playList, current) {
+            var i = 0,
+            len = playList.length,
+            p,
+            trueList = this.list.find('section')[0];
+            trueList.innerHTML = '';
+            for (; i < len ; i += 1) {
+                p = document.createElement('p');
+                p.dataset.index = i;
+                if (current === i) {p.className = 'active';}
+                p.innerHTML = playList[i].title + ' - ' + playList[i].artist;
+                trueList.appendChild(p);
+            }
+            var offset = (current+1) * p.offsetHeight - window.innerHeight / 2;
+            if (offset < 0) {offset = 0;}
+            trueList.style.top = -offset+'px';
+        },
+
+        alert: function(msg) {
+            var node = message;
+            node.innerHTML = msg;
+            node.style.opacity = '1';
+            setTimeout(function () {
+                node.style.opacity = '0';
+            }, 5000);
         }
+
     });
 
+    new PlayerUI();
 
-    progress.parentNode.addEventListener('click', function (e) {
-        port.postMessage({cmd: 'skip', rate: e.offsetX/275});
-    }, false);
 
-    player.addEventListener('contextmenu', function (e) {
-        if (isPlay) {
-            play.style.backgroundImage = 'url(../assets/play.png)';
-        }
-        else {
-            play.style.backgroundImage = 'url(../assets/pause.png)';
-        }
-        isPlay = !isPlay;
-        port.postMessage({cmd: 'switch', isPlay: isPlay});
-        e.preventDefault();
-    }, false);
-
-    play.addEventListener('click', function (e) {
-        if (isPlay) {
-            this.style.backgroundImage = 'url(../assets/play.png)';
-        }
-        else {
-            this.style.backgroundImage = 'url(../assets/pause.png)';
-        }
-        isPlay = !isPlay;
-        port.postMessage({cmd: 'switch', isPlay: isPlay});
-        e.preventDefault();
-    }, false);
-
-    next.addEventListener('click', function (e) {
-        port.postMessage({cmd: 'next'});
-        e.preventDefault();
-    }, false);
-
-    prev.addEventListener('click', function (e) {
-        port.postMessage({cmd: 'prev'});
-        e.preventDefault();
-    }, false);
-
-    document.body.addEventListener('keyup', function (e) {
-        switch (e.keyCode) {
-        case 37:
-            port.postMessage({cmd: 'prev'});
-            break;
-        case 38:
-            break;
-        case 39:
-            port.postMessage({cmd: 'next'});
-        case 40:
-            break;
-        case 32:
-            if (isPlay) {
-                play.style.backgroundImage = 'url(../assets/play.png)';
-            }
-            else {
-                play.style.backgroundImage = 'url(../assets/pause.png)';
-            }
-            isPlay = !isPlay;
-            port.postMessage({cmd: 'switch', isPlay: isPlay});
-            break;
-        }
-    });
-
-    document.body.addEventListener('keydown', function (e) {
-        switch (e.keyCode) {
-        case 38:
-            soundCtr.value += 5;
-            port.postMessage({cmd: 'volume', value: soundCtr.value});
-            break;
-        case 40:
-            soundCtr.value -= 5;
-            port.postMessage({cmd: 'volume', value: soundCtr.value});
-            break;
-        case 9:
-            e.preventDefault();
-            break;
-        }
-    });
-
-    sound.addEventListener('click', function (e) {
-        if (soundCtr.style.display !== 'block') {
-            soundCtr.style.display = 'block';
-        }
-        else {
-            soundCtr.style.display = 'none';
-        }
-        e.preventDefault();
-    }, false);
-
-    soundCtr.addEventListener('change', function (e) {
-        port.postMessage({cmd: 'volume', value: e.target.value});
-    }, false);
-
-    repeat.addEventListener('click', function (e) {
-        if (this.className === 'on') {
-            this.className = '';
-            port.postMessage({cmd: 'repeat', status: false});
-        }
-        else {
-            this.className = 'on';
-            port.postMessage({cmd: 'repeat', status: true});
-        }
-        e.preventDefault();
-    }, false);
-
-    love.addEventListener('click', function (e) {
-        if (this.className === 'on') {
-            this.className = '';
-            port.postMessage({cmd: 'love', status: false});
-        }
-        else {
-            this.className = 'on';
-            port.postMessage({cmd: 'love', status: true});
-        }
-        e.preventDefault();
-    }, false);
-
-    trash.addEventListener('click', function (e) {
-        port.postMessage({cmd: 'trash'});
-    }, false);
 
     function strftime(seconds) {
         var minutes = Math.floor(seconds / 60), seconds = seconds % 60, str;
         str = (minutes > 9 ? minutes : '0' + minutes) + ':' + (seconds > 9 ? seconds : '0' + seconds);
         return str;
     };
-
-
-
-    delegate(channel, 'p', 'click', function () {
-        if (!this.dataset.cascade) {
-            channelFlush(channelList);
-        }
-        else {
-            var cascade = this.dataset.cascade.split('|'), i, len, obj;
-            obj = channelList[cascade[0]];
-            for (i = 1, len = cascade.length ; i < len ; i += 1) {
-                obj = obj.sub[cascade[i]];
-            }
-            if (obj.sub) {
-                channelFlush(obj.sub, this.dataset.cascade);
-            }
-            else if (obj.v !== channelCurrent) {
-                port.postMessage({cmd: 'channel', channel: obj});
-            }
-        }
-    });
-
-    oauth.querySelector('a').addEventListener('click', function (e) {
-        window.open('http://douban.fm/');
-        oauth.style.top = '100%';
-        e.preventDefault();
-    }, false);
-
-    oauth.querySelectorAll('a')[1].addEventListener('click', function (e) {
-        oauth.style.top = '100%';
-        e.preventDefault();
-    }, false);
-
-    function channelFlush(data, cascade) {
-        var i, len, html = '', p;
-        channel.innerHTML = '';
-        for (i = 0, len = data.length ; i < len ; i += 1) {
-            p = document.createElement('p');
-            p.dataset.cascade = cascade ? cascade + '|' + i : i;
-            if (data[i].v !== undefined && data[i].v === channelCurrent) {
-                p.className = 'active';
-                alert('切换至 ' + (data[i].title ? data[i].title : data[i].t), message);
-            }
-            p.innerHTML = data[i].t;
-            channel.appendChild(p);
-            (function () {
-                var pp = p;
-                setTimeout(function () {
-                    pp.style.opacity = 1;
-                }, i*50);
-            })();
-        }
-        if (cascade) {
-            p = document.createElement('p');
-            p.dataset.cascade = cascade.slice(0, -2);
-            p.className = 'nav';
-            p.innerHTML = '上一层';
-            channel.appendChild(p);
-            (function () {
-                var pp = p;
-                setTimeout(function () {
-                    pp.style.opacity = 1;
-                }, i*50);
-            })();
-        }
-    }
-
-    function channelOrient(v, list, index) {
-        for (var i = 0, len = list.length ; i < len ; i += 1) {
-            if (list[i].v === v) {
-                channelFlush(list, index);
-                return index ? index + '|' + i : i.toString();
-            }
-
-            if (list[i].sub) {
-                var res = channelOrient(v, list[i].sub, index ? index + '|' + i : i.toString());
-                if (res) {
-                    return res;
-                }
-            }
-        }
-        return false;
-    }
-
-    delegate(list, 'p', 'click', function () {
-        if (this.className !== 'active') {
-            port.postMessage({cmd: 'index', index: Number(this.dataset.index)});
-            winswitcher.prev();
-        }
-    });
-
-    list.addEventListener('mousewheel', function (e) {
-        var top = parseInt(getComputedStyle(trueList).getPropertyValue('top'), 10) + (e.wheelDelta>0?1:-1)*window.innerHeight/5;
-        var height = trueList.scrollHeight - window.innerHeight;
-        if (height <= 0) {return;}
-        if (top > 0) {top = 0;}
-        else if (top < -height) {top = -height;}
-        trueList.style.top = top + 'px'
-    }, false);
-
-
-    function listFlush(playList, current) {
-        var i = 0,
-        len = playList.length,
-        p;
-        trueList.innerHTML = '';
-        for (; i < len ; i += 1) {
-            p = document.createElement('p');
-            p.dataset.index = i;
-            if (current === i) {p.className = 'active';}
-            p.innerHTML = playList[i].title + ' - ' + playList[i].artist;
-            trueList.appendChild(p);
-        }
-        var offset = (current+1) * p.offsetHeight - window.innerHeight / 2;
-        if (offset < 0) {offset = 0;}
-        trueList.style.top = -offset+'px';
-    }
-
-
-    function alert(msg, node) {
-        node.innerHTML = msg;
-        node.style.opacity = '1';
-        setTimeout(function () {
-            node.style.opacity = '0';
-        }, 5000);
-    }
-
-
-
-    function delegate(node, selector, type, handler) {
-        node.delegate || (node.delegate = {});
-        node.delegate[selector] = {handler: handler};
-        delegate.nodeList || (delegate.nodeList = []);
-        if (delegate.nodeList.indexOf(node) === -1) {
-            node.addEventListener(type, function (e) {
-                var target = e.target, key, tmp;
-                do {
-                    for (key in node.delegate) {
-                        tmp = node.delegate[key];
-                        if (Array.prototype.indexOf.call(node.querySelectorAll(key), target) > -1) {
-                            delete e.target;
-                            e.target = target;
-                            tmp.handler.call(target, e);
-                            return;
-                        }
-                    }
-                    target = target.parentNode;
-                }
-                while (target && target !== this);
-            }, false);
-            delegate.nodeList.push(node);
-        }
-    }
 
 })(this, this.document);
