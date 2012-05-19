@@ -89,7 +89,7 @@
         if (localStorage.notify === '1') {
             if (!p) {
                 var notification = webkitNotifications.createNotification(
-                    '../assets/icon48.png',
+                    '../assets/icon_medium.png',
                     playList[current].title,
                     playList[current].artist
                 );
@@ -103,7 +103,7 @@
                 chrome.windows.get(p.tab.windowId, function (win) {
                     if (!win.focused) {
                         var notification = webkitNotifications.createNotification(
-                            '../assets/icon48.png',
+                            '../assets/icon_medium.png',
                             playList[current].title,
                             playList[current].artist
                         );
@@ -173,13 +173,13 @@
                 case 'switch':
                     isPlay = msg.isPlay;
                     if (msg.isPlay) {
-                        chrome.browserAction.setIcon({path: '../assets/icon16_pause.png'});
+                        chrome.browserAction.setIcon({path: '../assets/icon_small.png'});
                         if (playList.length) {
                             audio.play();
                         }
                     }
                     else {
-                        chrome.browserAction.setIcon({path: '../assets/icon16_play.png'});
+                        chrome.browserAction.setIcon({path: '../assets/icon_small_pause.png'});
                         audio.pause();
                     }
                     break;
@@ -275,7 +275,7 @@
                                     if (isPlay) {
                                         audio.volume = Number(localStorage.volume) / 100;
                                         audio.play();
-                                        chrome.browserAction.setIcon({path: '../assets/icon16_pause.png'});
+                                        chrome.browserAction.setIcon({path: '../assets/icon_small.png'});
                                     }
                                     port.postMessage(getCurrentSongInfo());
                                 });
@@ -336,7 +336,7 @@
                 audio.src = playList[current].url;
                 audio.play();
                 isPlay = true;
-                chrome.browserAction.setIcon({path: '../assets/icon16_pause.png'});
+                chrome.browserAction.setIcon({path: '../assets/icon_small.png'});
                 if (p) {p.postMessage(getCurrentSongInfo());}
             });
         }
