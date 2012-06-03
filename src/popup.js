@@ -106,6 +106,7 @@ var Winswitcher = (function (window, document, undefined) {
     function css() {
         player.style.width = innerWidth + 'px';
         list.style.width = innerWidth + 'px';
+        //player.querySelector('section').style.height = innerHeight + 'px';
     }
 
     var PlayerUI = Class({
@@ -142,9 +143,9 @@ var Winswitcher = (function (window, document, undefined) {
             this.player = $('#player');
             this.list = $('#list');
 
-            this.progress = this.player.find('header div');
-            this.title = this.player.find('h1');
-            this.artist = this.player.find('section p');
+            this.progress = this.player.find('header progress');
+            this.title = this.player.find('header h1');
+            this.artist = this.player.find('header p');
             this.doubanlink = $('#doubanlink');
             this.channel = $('#message');
             this.play = $('#play');
@@ -153,6 +154,14 @@ var Winswitcher = (function (window, document, undefined) {
             this.soundCtr = this.player.find('input[type=range]');
             this.loading = $('#loading');
             this.oauth = $('#oauth');
+
+            this.player.click(function () {
+                window.open(doubanlink.href);
+            });
+
+            this.player.find('header, section, footer').click(function (e) {
+                e.stopPropagation();
+            });
 
             this.progress.parent().click(function (e) {
                 self.port.postMessage({cmd: 'skip', rate: e.offsetX/275});
@@ -219,6 +228,7 @@ var Winswitcher = (function (window, document, undefined) {
             }, false);
 
             this.player.find('#trash').click(function (e) {
+                e.preventDefault();
                 self.port.postMessage({cmd: 'trash'});
             }, false);
 
@@ -294,8 +304,7 @@ var Winswitcher = (function (window, document, undefined) {
         },
 
         onProgress: function (msg) {
-            this.progress.width(msg.time / msg.length * window.innerWidth);
-            this.progress.attr('title', strftime(msg.time) + '/' + strftime(msg.length));
+            this.progress.val(msg.time / msg.length * 100);
             if (msg.lrc) {
                 lrc.innerHTML = msg.lrc;
             }
@@ -305,9 +314,8 @@ var Winswitcher = (function (window, document, undefined) {
             var self = this;
             this.title.html(msg.title);
             this.artist.html(msg.artist + ' | ' + msg.albumtitle);
-            this.doubanlink.attr('url', msg.album);
-            this.progress.attr('title', strftime(msg.time) + '/' + strftime(msg.length));
-            this.progress.width(msg.time / msg.length * 275);
+            this.doubanlink.attr('href', msg.album);
+            this.progress.val(msg.length ? msg.time / msg.length * 100 : 0);
             this.player.css('backgroundImage', 'url('+ msg.picture +')');
             this.list.css('backgroundImage', 'url('+ msg.picture +')');
             this.soundCtr.val(msg.volume * 100);
@@ -340,13 +348,12 @@ var Winswitcher = (function (window, document, undefined) {
         },
 
         onCanplaythrough: function (msg) {
+            this.progress.val(0);
             if (msg.status) {
-                this.loading.hide();
+                lrc.innerHTML = '';
             }
             else {
-                this.loading.show();
-                this.progress.width(0);
-                lrc.innerHTML = '';
+                lrc.innerHTML = '加载中...';
             }
         },
 

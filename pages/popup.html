@@ -8,13 +8,16 @@
     <body>
         <div>
             <div id="player">
-                <header><div></div></header>
-                <section>
+                <header>
+                    <progress value="0" max="100"></progress>
                     <h1>正在获取歌曲，请稍候</h1>
                     <p></p>
+                </header>
+                <section>
+                    <a target="_blank" id="doubanlink" href=""></a>
+                    <p id="lrc"></p>
+                    <select id="message"></select>
                 </section>
-                <p id="lrc"></p>
-                <a target="_blank" id="doubanlink" href=""></a>
                 <footer>
                     <div class="left">
                         <a id="love">love</a>
@@ -29,10 +32,8 @@
                         <a id="sound">sound</a>
                         <a id="repeat">loop</a>
                     </div>
+                    <input type="range" value="100" />
                 </footer>
-                <input type="range" value="100" />
-                <div id="loading"></div>
-                <select id="message"></select>
             </div>
             <div id="list">
                 <section></section>
