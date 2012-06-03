@@ -319,7 +319,7 @@ var Winswitcher = (function (window, document, undefined) {
             this.player.css('backgroundImage', 'url('+ msg.picture +')');
             this.list.css('backgroundImage', 'url('+ msg.picture +')');
             this.soundCtr.val(msg.volume * 100);
-            if (msg.like === '1') {love.className = 'on';}
+            if (msg.like) {love.className = 'on';}
             else {love.className = '';}
             if (msg.isRepeat) {repeat.className = 'on';}
             else {repeat.className = '';}

@@ -230,12 +230,12 @@
                     if (msg.status) {
                         h.push('|' + playList[current].sid + ':r');
                         fetchSongs('r');
-                        playList[current].like = '1';
+                        playList[current].like = 1;
                     }
                     else {
                         h.push('|' + playList[current].sid + ':u');
                         fetchSongs('u');
-                        playList[current].like = '0';
+                        playList[current].like = 0;
                     }
                     h.pop();
                     break;
@@ -423,64 +423,6 @@
     }
 
     $.get('http://douban.fm/mine?type=liked&start=0');
-
-
-    function likedFm(fn) {
-        if (likedSongs.length) {
-            for (var i = 0, len = likedSongs.length < 5 ? likedSongs.length : 5, random ; i < len ; i += 1) {
-                random = Math.floor(Math.random() * likedSongs.length);
-                playList.push(likedSongs.splice(random, 1)[0]);
-            }
-            fn && fn();
-        }
-        else {
-            fetchLikedSongs(function () {
-                for (var i = 0, len = likedSongs.length < 5 ? likedSongs.length : 5, random ; i < len ; i += 1) {
-                    random = Math.floor(Math.random() * likedSongs.length);
-                    playList.push(likedSongs.splice(random, 1)[0]);
-                }
-                fn && fn();
-            });
-        }
-    }
-
-    function fetchLikedSongs(fn) {
-        var index = 0;
-        fetch(0)
-        function fetch(index) {
-            S.ajax('http://douban.fm/mine', {
-                data: 'type=liked&start=' + index,
-                load: function (client) {
-                    likedSongsParser.innerHTML = client.responseText.match(/(<div id="record_viewer">[\s\S]+)<div class="paginator">/m)[1].replace(/onload="reset_icon_size\(this\);"/gm, '');
-                    var songs = likedSongsParser.querySelectorAll('.info_wrapper');
-                    for (var i = 0, len = songs.length, song ; i < len ; i += 1) {
-                        song = songs[i];
-                        var item = {};
-                        item.album = song.querySelector('a').href;
-                        item.picture = song.querySelector('img').src.replace('spic', 'lpic');
-                        item.title = song.querySelector('.song_title').innerHTML;
-                        item.artist = song.querySelector('.performer').innerHTML;
-                        item.albumtitle = song.querySelector('.source a').innerHTML;
-                        item.sid = song.querySelector('.action').getAttribute('sid');
-                        item.url = 'http://otho.douban.com/view/song/small/p'+item.sid+'.mp3';
-                        item.like = '1';
-                        likedSongs.push(item);
-                    }
-                    likedSongsParser.innerHTML = '';
-                    if (index === 0 && fn) {fn();}
-                    if (len === 15) {
-                        setTimeout(function () {
-                            index += 15;
-                            fetch(index);
-                        }, 1000);
-                    }
-                },
-                error: function (client) {
-                    //fetch(index);
-                }
-            });
-        }
-    }
 
     function albumFm(fn) {
         if (albumSongs.length) {
