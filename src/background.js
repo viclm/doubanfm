@@ -369,7 +369,7 @@
 
         var channel = localStorage.channel;
 
-        if (!/^\d+$/.test(channel)) {
+        if (isNaN(Number(channel))) {
             localStorage.channel = channel = 1;
         }
         {
@@ -401,7 +401,7 @@
 
 
     function channelCheck(channel, fn) {
-        if (channel === 0) {
+        if (channel < 1) {
             chrome.cookies.get({
                 url: 'http://douban.fm',
                 name: 'dbcl2'
