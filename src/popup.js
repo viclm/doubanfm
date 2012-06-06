@@ -282,13 +282,41 @@ var Winswitcher = (function (window, document, undefined) {
                 trueList.style.top = top + 'px'
             }, false);
 
+            this.oauth.find('form').submit(function (e) {
+                var form = $(this), mask = $('<div class="mask">登陆中...</div>').appendTo(self.oauth);
+                $.post('http://douban.fm/j/login', form.serialize()+'&source=radio&remember=on', function (data) {
+                    if (data.r === 1) {
+                        if (data.err_no === 1011) {
+                            $.ajax({
+                                url: 'http://douban.fm/j/new_captcha',
+                                type: 'get',
+                                dataType: 'json',
+                                headers: {
+                                    Referer: 'http://douban.fm/'
+                                },
+                                success: function (data) {
+                                    form.find('[type=hidden]').val(data);
+                                    form.find('img').attr('src', 'http://douban.fm/misc/captcha?size=m&id=' + data).prev().val('');
+                                }
+                            });
+                        }
+                        this.append($('<p>'+data.err_msg+'</p>'));
+                    }
+                    else if (data.r === 0) {
+                        mask.remove();
+                        localStorage.username = base64.encode(form.find('[name=alias]').val());
+                        localStorage.password = base64.encode(form.find('[name=form_password]').val());
+                    }
+                }, 'json');
+
+                e.preventDefault();
+            });
+
             this.oauth.find('a').click(function (e) {
-                if (e.target.innerHTML === '确定') {
-                    window.open('http://douban.fm/');
-                }
                 self.oauth.css('top', '100%');
                 e.preventDefault();
             });
+
         },
 
         switch: function () {
@@ -368,6 +396,25 @@ var Winswitcher = (function (window, document, undefined) {
             }
             else {
                 this.oauth.css('top', '0');
+                if (localStorage.username) {
+                    this.oauth.find('[name=alias]').val(base64.decode(localStorage.username));
+                }
+                if (localStorage.password) {
+                    this.oauth.find('[name=form_password]').val(base64.decode(localStorage.password));
+                }
+
+                $.ajax({
+                    url: 'http://douban.fm/j/new_captcha',
+                    type: 'get',
+                    dataType: 'json',
+                    headers: {
+                        Referer: 'http://douban.fm/'
+                    },
+                    success: function (data) {
+                        self.oauth.find('[type=hidden]').val(data);
+                        self.oauth.find('img').attr('src', 'http://douban.fm/misc/captcha?size=m&id=' + data);
+                    }
+                });
             }
         },
 

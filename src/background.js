@@ -14,7 +14,6 @@
     var time = 0;
     var canplaythrough = false;
     var p = null;
-    var likedSongs = [];
     var albumSongs = [];
 
     if (localStorage.pin === '0') {
@@ -422,7 +421,7 @@
         return str;
     }
 
-    $.get('http://douban.fm/mine?type=liked&start=0');
+    //$.get('http://douban.fm/mine?type=liked&start=0');
 
     function albumFm(fn) {
         if (albumSongs.length) {

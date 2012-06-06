@@ -40,15 +40,23 @@
             </div>
         </div>
         <div id="oauth">
-            <p>红心兆赫和私人兆赫需要您登录豆瓣FM</p><p>点击确定进入登陆页面</p><p>或点击取消后选择其他频道</p>
-            <a href="#">确定</a>
+            <form>
+            <h2>登陆</h2>
+            <input type="text" name="alias" placeholder="用户名" required />
+            <input type="password" name="form_password" placeholder="密码" required />
+            <input type="hidden" name="captcha_id" />
+            <input type="text" name="captcha_solution" placeholder="验证码" required />
+            <img src="" alt="" />
+            <input type="submit" value="登陆" />
             <a href="#">取消</a>
+            </form>
         </div>
 
         <a id="left">left</a>
         <a id="right">right</a>
         <script type="text/javascript" charset="utf-8" src="../src/channel.js"></script>
         <script type="text/javascript" src="../src/oop.js"></script>
+        <script type="text/javascript" src="../src/base64.js"></script>
         <script type="text/javascript" src="../src/zepto.min.js"></script>
         <script type="text/javascript" src="../src/slideshow.js"></script>
         <script type="text/javascript" charset="utf-8" src="../src/popup.js"></script>
