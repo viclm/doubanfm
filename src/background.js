@@ -1,45 +1,50 @@
+localStorage.channel || (localStorage.channel = '1');
+localStorage.notify || (localStorage.notify = '1');
+localStorage.lrc || (localStorage.lrc = '1');
+localStorage.pin || (localStorage.pin = '0');
+localStorage.volume || (localStorage.volume = '100');
 
-    localStorage.channel || (localStorage.channel = '1');
-    localStorage.notify || (localStorage.notify = '1');
-    localStorage.lrc || (localStorage.lrc = '1');
-    localStorage.pin || (localStorage.pin = '0');
-    localStorage.volume || (localStorage.volume = '100');
+var dfm = {};
 
-    var audio = document.querySelector('audio');
-    var isPlay = true;
-    var isRepeat = false;
-    var playList = [];
-    var h = [];
-    var current = 0;
-    var time = 0;
-    var canplaythrough = false;
-    var p = null;
-    var likedSongs = [];
-    var albumSongs = [];
+dfm.Song = Backbone.Model.extend({
 
-    if (localStorage.pin === '0') {
-        chrome.browserAction.setPopup({popup: '../pages/popup.html'});
-    }
-    else {
-        chrome.browserAction.onClicked.addListener(function(tab) {
-            if (p) {
-                chrome.windows.update(p.tab.windowId, {focused: true});
-            }
-            else {
-                chrome.windows.create({
-                    width: 300,
-                    height: 320,
-                    url: '../pages/popup.html',
-                    type: 'popup'
-                });
-            }
+    initialize: function () {},
+
+    getLrc: function () {
+        var self = this;
+        $.ajaxJSONP({
+            url: 'http://openapi.baidu.com/public/2.0/mp3/info/suggestion',
+            data: 'format=json&word='+encodeURIComponent(self.get('title').replace(/\(.+\)$/, ''))+'&callback=?',
+            success: function (data) {
+                data = data.song;
+                if (!data) {return;}
+                for (var i = 0, len = data.length ; i < len ; i += 1) {
+                    if (self.get('artist').toLowerCase().indexOf(data[i].artistname.toLowerCase()) > -1) {
+                        $.ajax({
+                            url: 'http://ting.baidu.com/data/music/songlink',
+                            data: 'type=mp3&speed=&songIds=' + data[i].songid,
+                            dataType: 'json',
+                            success: function (data) {
+                                var song = data.data.songList[0];
+                                if (song) {
+                                    $.get('http://ting.baidu.com'+song.lrcLink, function (client) {
+                                        self.set({lrc: self.parseLrc(client)});
+                                    });
+                                }
+                            }
+                        });
+                        break;
+                    }
+                }
+            },
+            complete: function (){}
         });
-    }
+    },
 
-    function parseLrc(lrc) {
+    parseLrc: function (lrc) {
         lrc = lrc.split('\n');
         var filter = /^((?:\[[\d.:]+?\])+?)([^\[\]]*)$/,
-            nLrc = {};
+        nLrc = {};
 
         for (var i = 0, len = lrc.length, res, time ; i < len ; i += 1) {
             res = lrc[i].match(filter);
@@ -54,44 +59,235 @@
         return nLrc;
     }
 
-    audio.addEventListener('loadstart', function () {
-        canplaythrough = false;
-        p && p.postMessage({cmd: 'canplaythrough', status: false});
-        if (localStorage.lrc === '1' && !playList[current].lrc) {
-            $.ajaxJSONP({
-                url: 'http://openapi.baidu.com/public/2.0/mp3/info/suggestion',
-                data: 'format=json&word='+encodeURIComponent(playList[current].title.replace(/\(.+\)$/, ''))+'&callback=?',
-                success: function (data) {
-                    data = data.song;
-                    if (!data) {return;}
-                    for (var i = 0, len = data.length ; i < len ; i += 1) {
-                        if (playList[current].artist.toLowerCase().indexOf(data[i].artistname.toLowerCase()) > -1) {
-                            $.ajax({
-                                url: 'http://ting.baidu.com/data/music/songlink',
-                                data: 'type=mp3&speed=&songIds=' + data[i].songid,
-                                dataType: 'json',
-                                success: function (data) {
-                                    var song = data.data.songList[0];
-                                    if (song) {
-                                        $.get('http://ting.baidu.com'+song.lrcLink, function (client) {
-                                            playList[current].lrc = parseLrc(client);
-                                        });
-                                    }
-                                }
-                            });
-                            break;
-                        }
-                    }
-                },
-                complete: function (){}
+
+});
+
+dfm.PlayList = Backbone.Collection.extend({
+
+    model: dfm.Song,
+
+    url: 'http://douban.fm/j/mine/playlist',
+
+    parse: function (response) {
+        var songs = [];
+        if (response.song) {
+            response.song.forEach(function (song) {
+                if (/^\d+$/.test(song.sid)) {
+                    song.picture = song.picture.replace('mpic', 'lpic');
+                    //song.url = 'http://otho.douban.com/view/song/small/p'+song.sid+'.mp3';
+                    song.album = 'http://music.douban.com' + song.album;
+                    songs.push(song);
+                }
             });
         }
+        return songs;
+    }
+
+});
+
+dfm.Player = Backbone.View.extend({
+
+    el: 'audio',
+
+    p: null,
+    playList: [],
+    current: 0,
+    canplaythrough: false,
+    isPlay: true,
+    isRepeat: false,
+    time: 0,
+
+    initialize: function () {
+        this.playList = new dfm.PlayList();
+        if (localStorage.pin === '0') {
+            chrome.browserAction.setPopup({popup: '../pages/popup.html'});
+        }
+        else {
+            chrome.browserAction.onClicked.addListener(function(tab) {
+                if (this.p) {
+                    chrome.windows.update(this.p.tab.windowId, {focused: true});
+                }
+                else {
+                    chrome.windows.create({
+                        width: 300,
+                        height: 275,
+                        url: '../pages/popup.html',
+                        type: 'popup'
+                    });
+                }
+            }.bind(this));
+        }
+
+        chrome.extension.onConnect.addListener(function(port) {
+            if (port.name === 'fm') {
+                this.p = port;
+                port.onMessage.addListener(function (msg, port) {
+                    var self = this;
+                    switch (msg.cmd) {
+                    case 'skip':
+                        this.el.currentTime = this.el.duration * msg.rate;
+                        break;
+                    case 'switch':
+                        this.isPlay = msg.isPlay;
+                        if (msg.isPlay) {
+                            chrome.browserAction.setIcon({path: '../assets/icon_small.png'});
+                            if (this.playList.length) {
+                                this.el.play();
+                            }
+                        }
+                        else {
+                            chrome.browserAction.setIcon({path: '../assets/icon_small_pause.png'});
+                            this.el.pause();
+                        }
+                        break;
+                    case 'next':
+                        if (this.playList.at(this.current + 1)) {
+                            this.current += 1;
+                            this.el.src = this.playList.at(this.current).get('url');
+                            if (this.isPlay) {this.el.play();}
+                            this.time = 0;
+                            port.postMessage(this.getCurrentSongInfo());
+                        }
+                        else {
+                            this.fetchSongs('s', function () {
+                                self.current += 1;
+                                self.el.src = self.playList.at(self.current).get('url');
+                                if (self.isPlay) {self.el.play();}
+                                self.time = 0;
+                                port.postMessage(self.getCurrentSongInfo());
+                            });
+                        }
+                        break;
+                    case 'prev':
+                        if (this.current) {
+                            this.current -= 1;
+                            this.el.src = this.playList.at(this.current).get('url');
+                            if (this.isPlay) {this.el.play();}
+                        }
+                        port.postMessage(this.getCurrentSongInfo());
+                        break;
+                    case 'index':
+                        this.current = msg.index;
+                        this.el.src = this.playList.at(this.current).get('url');
+                        if (this.isPlay) {this.el.play();}
+                        port.postMessage(this.getCurrentSongInfo());
+                        break;
+                    case 'volume':
+                        this.el.volume = msg.value / 100;
+                        localStorage.volume = msg.value;
+                        break;
+                    case 'repeat':
+                        this.isRepeat = msg.status;
+                        break;
+                    case 'love':
+                        var type, song = this.playList.at(this.current);
+                        if (msg.status) {
+                            type = 'r';
+                            song.set({like: 1});
+                        }
+                        else {
+                            type = 'u';
+                            song.set({like: 0});
+                        }
+                        this.fetchSongs(type);
+                        break;
+                    case 'trash':
+                        var f = false;
+                        this.fetchSongs('b', function (playList) {
+                            if (f) {
+                                self.current += 1;
+                                self.el.src = self.playList.at(self.current).get('url');
+                                if (self.isPlay) {self.el.play();}
+                                self.time = 0;
+                                port.postMessage(self.getCurrentSongInfo());
+                            }
+                        });
+                        this.playList.remove(this.playList.at(this.current));
+                        if (this.playList.at(this.current)) {
+                            this.el.src = this.playList.at(this.current).get('url');
+                            this.el.play();
+                            port.postMessage(this.getCurrentSongInfo());
+                        }
+                        else {
+                            this.current -= 1;
+                            f = true;
+                        }
+                        break;
+                    case 'get':
+                        if (this.playList.length) {
+                            port.postMessage(this.getCurrentSongInfo());
+                        }
+                        else {
+                            this.fetchSongs('n', function (loginNeeded) {
+                                var self = this;
+                                if (loginNeeded) {
+                                    port.postMessage({cmd: 'channel'});
+                                }
+                                else {
+                                    this.el.src = this.playList.at(0).get('url');
+                                    if (this.isPlay) {
+                                        this.el.volume = Number(localStorage.volume) / 100;
+                                        this.el.play();
+                                        chrome.browserAction.setIcon({path: '../assets/icon_small.png'});
+                                    }
+                                    port.postMessage(this.getCurrentSongInfo());
+                                }
+                            }.bind(this));
+                        }
+                        break;
+                    case 'channel':
+                        localStorage.channel = msg.channel;
+                        this.playList.remove(this.playList.models.slice(this.current + 1));
+                        this.fetchSongs('n', function (loginNeeded) {
+                            var self = this;
+                            if (loginNeeded) {
+                                port.postMessage({cmd: 'channel', channel: localStorage.channel});
+                            }
+                            else {
+                                port.postMessage({cmd: 'channel'});
+                                this.current += 1;
+                                this.el.src = this.playList.at(this.current).get('url');
+                                if (this.isPlay) {
+                                    this.el.volume = Number(localStorage.volume) / 100;
+                                    this.el.play();
+                                }
+                                port.postMessage(this.getCurrentSongInfo());
+                            }
+                        }.bind(this));
+                        break;
+                    }
+                }.bind(this));
+
+                port.onDisconnect.addListener(function (port) {
+                    if (port.name === 'fm') {
+                        this.p = null;
+                    }
+                }.bind(this));
+            }
+        }.bind(this));
+    },
+
+    events: {
+        'loadstart': 'onloadstart',
+        'canplaythrough': 'oncanplaythrough',
+        'timeupdate': 'ontimeupdate',
+        'ended': 'onended'
+    },
+
+    onloadstart: function () {
+        var song = this.playList.at(this.current);
+        this.canplaythrough = false;
+        this.time = 0;
+        this.p && this.p.postMessage({cmd: 'canplaythrough', status: false});
+        if (localStorage.lrc === '1' && !song.get('lrc')) {
+            song.getLrc();
+        }
         if (localStorage.notify === '1') {
-            if (!p) {
+            if (!this.p) {
                 var notification = webkitNotifications.createNotification(
                     '../assets/icon_medium.png',
-                    playList[current].title,
-                    playList[current].artist
+                    song.get('title'),
+                    song.get('artist')
                 );
 
                 notification.show();
@@ -99,13 +295,13 @@
                     notification.cancel();
                 }, 5000);
             }
-            else if (p.tab && p.tab.id !== -1) {
-                chrome.windows.get(p.tab.windowId, function (win) {
+            else if (this.p.tab && this.p.tab.id !== -1) {
+                chrome.windows.get(this.p.tab.windowId, function (win) {
                     if (!win.focused) {
                         var notification = webkitNotifications.createNotification(
                             '../assets/icon_medium.png',
-                            playList[current].title,
-                            playList[current].artist
+                            song.get('title'),
+                            song.get('artist')
                         );
 
                         notification.show();
@@ -116,305 +312,113 @@
                 });
             }
         }
-        chrome.browserAction.setTitle({title: playList[current].title+'-'+playList[current].artist});
-        if (!playList[current + 1]) {fetchSongs('p');}
-    },false);
+        chrome.browserAction.setTitle({title: song.get('title')+'-'+song.get('artist')});
+        if (!this.playList.at(this.current + 1)) {
+            this.fetchSongs('p');
+        }
+    },
 
-    audio.addEventListener('canplaythrough', function () {
-        canplaythrough = true;
-        p && p.postMessage({cmd: 'canplaythrough', status: true});
-    },false);
+    oncanplaythrough: function () {
+        this.canplaythrough = true;
+        this.p && this.p.postMessage({cmd: 'canplaythrough', status: true});
+    },
 
-    audio.addEventListener('timeupdate', function () {
-        var currentTime = Math.round(audio.currentTime), msg;
-        if (currentTime !== time) {
-            time = currentTime;
-            if(p) {
-                msg = {cmd: 'progress', time: time, length: Math.round(audio.duration)}
-                if(playList[current].lrc && playList[current].lrc[currentTime]) {
-                    msg.lrc = playList[current].lrc[currentTime];
+    ontimeupdate: function () {
+        var currentTime = Math.round(this.el.currentTime), lrc, msg;
+        if (currentTime !== this.time) {
+            this.time = currentTime;
+            if(this.p) {
+                lrc = this.playList.at(this.current).get('lrc');
+                msg = {cmd: 'progress', time: currentTime};
+                msg.length = Math.round(this.el.duration);
+                if(lrc && lrc[currentTime]) {
+                    msg.lrc = lrc[currentTime];
                 }
-                p.postMessage(msg);
+                this.p.postMessage(msg);
             }
         }
-    },false);
+    },
 
-    audio.addEventListener('ended', function () {
-        if (!isRepeat) {
-            h.push('|' + playList[current].sid + ':p');
-            fetchSongs('e');
-            if (playList[current + 1]) {
-                current += 1;
-                audio.src = playList[current].url;
+    onended: function () {
+        var self = this;
+        if (!this.isRepeat) {
+            this.fetchSongs('e');
+            if (this.playList.at(this.current + 1)) {
+                this.current += 1;
+                this.el.src = this.playList.at(this.current).get('url');
             }
             else {
-                fetchSongs('p', function () {
-                    current += 1;
-                    audio.src = playList[current].url;
-                    if (isPlay) {audio.play();}
-                    time = 0;
-                    port.postMessage(getCurrentSongInfo());
+                this.fetchSongs(function () {
+                    self.current += 1;
+                    self.el.src = playList.at(self.current).get('url');
+                    if (self.isPlay) {self.el.play();}
+                    self.time = 0;
+                    self.p && self.p.postMessage(self.getCurrentSongInfo());
                 });
             }
         }
-        time = 0;
-        audio.play();
-        if (p) {p.postMessage(getCurrentSongInfo());}
-    }, false);
+        this.time = 0;
+        this.el.play();
+        this.p && this.p.postMessage(this.getCurrentSongInfo());
+    },
 
-    chrome.extension.onConnect.addListener(function(port) {
-        if (port.name === 'fm') {
-            p = port;
-            port.onMessage.addListener(function (msg, port) {
-                switch (msg.cmd) {
-                case 'skip':
-                    audio.currentTime = audio.duration * msg.rate;
-                    break;
-                case 'switch':
-                    isPlay = msg.isPlay;
-                    if (msg.isPlay) {
-                        chrome.browserAction.setIcon({path: '../assets/icon_small.png'});
-                        if (playList.length) {
-                            audio.play();
-                        }
-                    }
-                    else {
-                        chrome.browserAction.setIcon({path: '../assets/icon_small_pause.png'});
-                        audio.pause();
-                    }
-                    break;
-                case 'next':
-                    h.push('|' + playList[current].sid + ':s');
-
-                    if (playList[current + 1]) {
-                        current += 1;
-                        audio.src = playList[current].url;
-                        if (isPlay) {audio.play();}
-                        time = 0;
-                        port.postMessage(getCurrentSongInfo());
-                    }
-                    else {
-                        fetchSongs('s', function () {
-                            current += 1;
-                            audio.src = playList[current].url;
-                            if (isPlay) {audio.play();}
-                            time = 0;
-                            port.postMessage(getCurrentSongInfo());
-                        });
-                    }
-                    break;
-                case 'prev':
-                    if (current) {
-                        current -= 1;
-                        audio.src = playList[current].url;
-                        if (isPlay) {audio.play();}
-                        time = 0;
-                    }
-                    port.postMessage(getCurrentSongInfo());
-                    break;
-                case 'index':
-                    current = msg.index;
-                    audio.src = playList[current].url;
-                    if (isPlay) {audio.play();}
-                    time = 0;
-                    port.postMessage(getCurrentSongInfo());
-                    break;
-                case 'volume':
-                    audio.volume = msg.value / 100;
-                    localStorage.volume = msg.value;
-                    break;
-                case 'repeat':
-                    isRepeat = msg.status;
-                    break;
-                case 'love':
-                    if (msg.status) {
-                        h.push('|' + playList[current].sid + ':r');
-                        fetchSongs('r');
-                        playList[current].like = 1;
-                    }
-                    else {
-                        h.push('|' + playList[current].sid + ':u');
-                        fetchSongs('u');
-                        playList[current].like = 0;
-                    }
-                    h.pop();
-                    break;
-                case 'trash':
-                    var f = false;
-                    h.push('|' + playList[current].sid + ':b');
-                    fetchSongs('b', function () {
-                        if (f) {
-                            current += 1;
-                            audio.src = playList[current].url;
-                            audio.play();
-                            time = 0;
-                            port.postMessage(getCurrentSongInfo());
-                        }
-                    });
-                    h.pop();
-                    playList.splice(current, 1);
-
-                    if (!playList[current]) {
-                        current -= 1;
-                        f = true;
-                    }
-                    audio.src = playList[current].url;
-                    audio.play();
-                    time = 0;
-                    port.postMessage(getCurrentSongInfo());
-                    break;
-                case 'get':
-                    if (playList.length) {
-                        port.postMessage(getCurrentSongInfo());
-                    }
-                    else {
-                        channelCheck(Number(localStorage.channel), function (status) {
-                            if (status) {
-                                fetchSongs('n', function () {
-                                    audio.src = playList[0].url;
-                                    if (isPlay) {
-                                        audio.volume = Number(localStorage.volume) / 100;
-                                        audio.play();
-                                        chrome.browserAction.setIcon({path: '../assets/icon_small.png'});
-                                    }
-                                    port.postMessage(getCurrentSongInfo());
-                                });
-                            }
-                            else {
-                                port.postMessage({cmd: 'channel'});
-                            }
-                        });
-                    }
-                    break;
-                case 'channel':
-                    channelCheck(msg.channel, function (status) {
-                        if (status) {
-                            localStorage.channel = msg.channel;
-                            port.postMessage({cmd: 'channel', channel: msg.channel});
-                            playList = playList.slice(0, current+1);
-                            fetchSongs('n', function () {
-                                current += 1;
-                                audio.src = playList[current].url;
-                                if (isPlay) {audio.play();}
-                                port.postMessage(getCurrentSongInfo());
-                            });
-                        }
-                        else {
-                            port.postMessage({cmd: 'channel'});
-                        }
-                    });
-                    break;
-                }
-            });
-
-            port.onDisconnect.addListener(function (port) {
-                if (port.name === 'fm') {
-                    p = null;
-                }
-            });
-        }
-    });
-
-    chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
-        if (request.cmd === 'albumfm') {
-            albumSongs = [];
-            for (var i = 0, len = request.album.songs.length, song ; i < len ; i += 1) {
-                song = request.album.songs[i];
-                song.albumtitle = request.album.title;
-                song.picture = request.album.picture;
-                song.artist = request.album.artist;
-                song.url = 'http://otho.douban.com/view/song/small/p'+song.sid+'.mp3';
-                song.album = request.album.url;
-                albumSongs.push(song);
-            }
-            localStorage.albumfm = JSON.stringify(albumSongs);
-            localStorage.channel = '-2';
-            playList = playList.slice(0, current+1);
-            if (playList.length) {current += 1;}
-            if (p) {p.postMessage({cmd: 'channel', channel: {t: '专辑频道', v: -2, title: request.album.title}});}
-            fetchSongs('n', function () {
-                audio.src = playList[current].url;
-                audio.play();
-                isPlay = true;
-                chrome.browserAction.setIcon({path: '../assets/icon_small.png'});
-                if (p) {p.postMessage(getCurrentSongInfo());}
-            });
-        }
-    });
-
-    function getCurrentSongInfo() {
-        var song = playList[current], info = {cmd: 'set'};
-        info.title = song.title;
-        info.artist = song.artist;
-        info.album = song.album;
-        info.albumtitle = song.albumtitle;
-        info.picture = song.picture;
-        info.like = song.like;
-        info.time = time;
-        info.length = Math.floor(audio.duration);
-        info.isPlay = isPlay;
-        info.isRepeat = isRepeat;
-        info.volume = audio.volume;
-        info.canplaythrough = canplaythrough;
-        info.current = current;
-        info.list = playList;
+    getCurrentSongInfo: function () {
+        var info = this.playList.at(this.current).toJSON();
+        info.cmd = 'set';
+        info.time = this.time;
+        info.length = Math.floor(this.el.duration);
+        info.isPlay = this.isPlay;
+        info.isRepeat = this.isRepeat;
+        info.volume = this.el.volume;
+        info.canplaythrough = this.canplaythrough;
+        info.current = this.current;
+        info.list = this.playList.toJSON();
         return info;
-    }
+    },
 
-    function fetchSongs(type, fn) {
-        if (type === 'e') {
-            $.get('http://douban.fm/j/mine/playlist?type=e&sid='+playList[current].sid+'&channel=0&from=mainsite&r='+rand());
-            return;
-        }
+    fetchSongs: function (type, fn) {
+        var channel = Number(localStorage.channel),
+            fetch = function () {
+                var data = 'type='+type+'&channel='+channel+'&from=mainsite&r='+self.rand();
+                if (type !== 'n') {
+                    data += '&sid='+self.playList.at(self.current).get('sid');
+                }
+                self.playList.fetch({
+                    add: true,
+                    data: data,
+                    dataType: 'json',
+                    success: function () {
+                        if (fn) {fn();}
+                    },
+                    error: function (client) {
+                        if (self.p) {self.p.postMessage({cmd: 'error'})}
+                    }
+                });
+            },
+            self = this;
 
-        var channel = localStorage.channel;
-
-        if (isNaN(Number(channel))) {
+        if (isNaN(channel)) {
             localStorage.channel = channel = 1;
         }
-        {
-            h = h.slice(-20);
-            $.ajax({
-                url: 'http://douban.fm/j/mine/playlist',
-                data: type === 'n'
-                        ? 'type=n&h=&channel='+channel+'&from=mainsite&r='+rand()
-                        : 'type='+type+'&sid='+playList[current].sid+'&h='+ h.join('') +'&channel='+channel+'&from=mainsite&r='+rand(),
-                dataType: 'json',
-                success: function (client) {
-                    for (var i = 0, len = client.song.length ; i < len ; i += 1) {
-                        if (/^\d+$/.test(client.song[i].sid)) {
-                            client.song[i].picture = client.song[i].picture.replace('mpic', 'lpic');
-                            //client.song[i].url = 'http://otho.douban.com/view/song/small/p'+client.song[i].sid+'.mp3';
-                            client.song[i].album = 'http://music.douban.com'+client.song[i].album;
-                            playList.push(client.song[i]);
-                        }
-                    }
-                    if (fn) {fn();}
-                    else if (p) {p.postMessage(getCurrentSongInfo());}
-                },
-                error: function (client) {
-                    if (p) {p.postMessage({cmd: 'error'})}
-                }
-            });
-        }
-    }
-
-
-    function channelCheck(channel, fn) {
         if (channel < 1) {
             chrome.cookies.get({
                 url: 'http://douban.fm',
                 name: 'dbcl2'
             }, function (c) {
-                fn(c);
+                if (c) {
+                    fetch(c);
+                }
+                else {
+                    fn(true);
+                }
             });
         }
         else {
-            fn(true);
+            fetch();
         }
-    }
+    },
 
-    function rand() {
+    rand: function () {
         var charset = '1234567890abcdef', str = '', i;
         for (i = 0 ; i < 10 ; i += 1) {
             str += charset.charAt(Math.floor(Math.random() * 16));
@@ -422,17 +426,6 @@
         return str;
     }
 
-    $.get('http://douban.fm/mine?type=liked&start=0');
+});
 
-    function albumFm(fn) {
-        if (albumSongs.length) {
-            playList = playList.concat(albumSongs);
-            fn && fn();
-        }
-        else if (localStorage.albumfm) {
-            albumSongs = JSON.parse(localStorage.albumfm);
-            playList = playList.concat(albumSongs);
-            fn && fn();
-        }
-    }
-
+var p = new dfm.Player();

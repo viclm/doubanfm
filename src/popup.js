@@ -1,423 +1,410 @@
-var Winswitcher = (function (window, document, undefined) {
-    function Winswitcher(args) {
+var dfm = {};
 
-        this.superclass.constructor.call(this, args);
+dfm.Winswitcher = function (args) {
 
-        this.slide = document.querySelector('body > div');
-        this.btnPrev = left;
-        this.btnNext = right;
-        this.count = 1;
-        this.length = 2;
+    this.superclass.constructor.call(this, args);
 
-        var self = this;
+    this.slide = document.querySelector('body > div');
+    this.btnPrev = left;
+    this.btnNext = right;
+    this.count = 1;
+    this.length = 2;
 
-        var hover = false;
+    var self = this;
 
-        this.btnPrev.addEventListener('mouseover', function (e) {
-            hover = true;
-            setTimeout(function () {
-                if (hover) {self.prev();}
-            }, 500);
-        }, false);
+    var hover = false;
 
-        this.btnPrev.addEventListener('mouseout', function (e) {
-            hover = false;
-        }, false);
+    this.btnPrev.addEventListener('mouseover', function (e) {
+        hover = true;
+        setTimeout(function () {
+            if (hover) {self.prev();}
+        }, 500);
+    }, false);
 
-        this.btnNext.addEventListener('mouseover', function (e) {
-            hover = true;
-            setTimeout(function () {
-                if (hover) {self.next();}
-            }, 500);
-        }, false);
+    this.btnPrev.addEventListener('mouseout', function (e) {
+        hover = false;
+    }, false);
 
-        this.btnNext.addEventListener('mouseout', function (e) {
-            hover = false;
-        }, false);
+    this.btnNext.addEventListener('mouseover', function (e) {
+        hover = true;
+        setTimeout(function () {
+            if (hover) {self.next();}
+        }, 500);
+    }, false);
 
-        document.body.addEventListener('mouseover', function () {
-            if (self.btnPrev.dataset.visible === 'hidden') {
-                self.btnPrev.style.display = 'none';
-            }
-            else {
-                self.btnPrev.style.display = 'block';
-            }
+    this.btnNext.addEventListener('mouseout', function (e) {
+        hover = false;
+    }, false);
 
-            if (self.btnNext.dataset.visible === 'hidden') {
-                self.btnNext.style.display = 'none';
-            }
-            else {
-                self.btnNext.style.display = 'block';
-            }
-        }, false);
-
-        document.body.addEventListener('mouseout', function () {
+    document.body.addEventListener('mouseover', function () {
+        if (self.btnPrev.dataset.visible === 'hidden') {
             self.btnPrev.style.display = 'none';
+        }
+        else {
+            self.btnPrev.style.display = 'block';
+        }
+
+        if (self.btnNext.dataset.visible === 'hidden') {
             self.btnNext.style.display = 'none';
-        }, false);
+        }
+        else {
+            self.btnNext.style.display = 'block';
+        }
+    }, false);
 
-        this.setNav();  
+    document.body.addEventListener('mouseout', function () {
+        self.btnPrev.style.display = 'none';
+        self.btnNext.style.display = 'none';
+    }, false);
+
+    this.setNav();
+    this.btnPrev.style.display = 'none';
+    this.btnNext.style.display = 'none';
+}
+
+extend(dfm.Winswitcher, Slideshow);
+
+dfm.Winswitcher.prototype.moveTo = function (index) {
+    var res = this.superclass.moveTo.call(this, index);
+    if (res > -1) {
+        this.slide.style.left = -(res-1)*100+'%';
+        this.setNav();
+    }
+};
+
+dfm.Winswitcher.prototype.setNav = function () {
+    if (this.count === 1) {
         this.btnPrev.style.display = 'none';
+        this.btnPrev.dataset.visible = 'hidden';
+    }
+    else {
+        this.btnPrev.style.display = 'block';
+        this.btnPrev.dataset.visible = 'show';
+    }
+
+    if (this.count === this.length) {
         this.btnNext.style.display = 'none';
+        this.btnNext.dataset.visible = 'hidden';
     }
-
-    extend(Winswitcher, Slideshow);
-
-    Winswitcher.prototype.moveTo = function (index) {
-        var res = this.superclass.moveTo.call(this, index);
-        if (res > -1) {
-            this.slide.style.left = -(res-1)*100+'%';
-            this.setNav();
-        }
-    };
-
-    Winswitcher.prototype.setNav = function () {
-        if (this.count === 1) {
-            this.btnPrev.style.display = 'none';
-            this.btnPrev.dataset.visible = 'hidden';
-        }
-        else {
-            this.btnPrev.style.display = 'block';
-            this.btnPrev.dataset.visible = 'show';
-        }
-
-        if (this.count === this.length) {
-            this.btnNext.style.display = 'none';
-            this.btnNext.dataset.visible = 'hidden';
-        }
-        else {
-            this.btnNext.style.display = 'block';
-            this.btnNext.dataset.visible = 'show';
-        }
+    else {
+        this.btnNext.style.display = 'block';
+        this.btnNext.dataset.visible = 'show';
     }
+}
 
-    return Winswitcher;
-})(this, this.document);
+dfm.Player = Backbone.View.extend({
 
-(function (window, document, undefined) {
+    el: 'body',
 
+    isPlay: false,
 
+    initialize: function () {
 
-    var winswitcher = new Winswitcher();
+        this.player = $('#player');
+        this.list = $('#list');
+        this.progress = this.player.find('header progress');
+        this.title = this.player.find('header h1');
+        this.artist = this.player.find('header p');
+        this.doubanlink = this.player.find('a');
+        this.message = this.player.find('section p')
+        this.channel = this.player.find('select');
+        this.play = $('#play');
+        this.prev = $('#prev');
+        this.next = $('#next');
+        this.love = $('#love');
+        this.trash = $('#trash');
+        this.sound = $('#sound');
+        this.repeat = $('#repeat');
+        this.soundCtr = this.player.find('footer input');
+        this.oauth = $('#oauth');
 
-    css();
-    window.addEventListener('resize', css, false);
+        for (var i = 0, len = channelList.length, p ; i < len ; i += 1) {
+            p = $('<option>');
+            p.attr('value', channelList[i].channel_id);
+            p.html(channelList[i].name);
+            this.channel.append(p);
+        }
+        this.channel.val(localStorage.channel);
 
-    function css() {
-        player.style.width = innerWidth + 'px';
-        list.style.width = innerWidth + 'px';
-        //player.querySelector('section').style.height = innerHeight + 'px';
-    }
+        this.onResize();
+        $(window).resize(this.onResize.bind(this));
+        this.winswitcher = new dfm.Winswitcher();
 
-    var PlayerUI = Class({
-
-        init: function () {
-
-            var self = this;
-
-            this.isPlay = false;
-
-            this.port = chrome.extension.connect({name: 'fm'});
-            this.port.postMessage({cmd: 'get'});
-            this.port.onMessage.addListener(function (msg) {
-                switch (msg.cmd) {
+        this.port = chrome.extension.connect({name: 'fm'});
+        this.port.postMessage({cmd: 'get'});
+        this.port.onMessage.addListener(function (msg) {
+            switch (msg.cmd) {
                 case 'progress':
-                    self.onProgress(msg);
+                    this.onProgress(msg);
                     break;
                 case 'set':
-                    self.onSet(msg);
+                    this.render(msg);
                     break;
                 case 'canplaythrough':
-                    self.onCanplaythrough(msg);
+                    this.onCanplaythrough(msg);
                     break;
                 case 'error':
-                    //alert('您当前网速很慢', message);
+                    this.message.text(msg.msg);
                     break;
                 case 'channel':
-                    self.onChannel(msg)
+                    this.onChannel(msg);
                     break;
-                }
-            });
-
-
-            this.player = $('#player');
-            this.list = $('#list');
-
-            this.progress = this.player.find('header progress');
-            this.title = this.player.find('header h1');
-            this.artist = this.player.find('header p');
-            this.doubanlink = $('#doubanlink');
-            this.channel = $('#message');
-            this.play = $('#play');
-            this.love = $('#love');
-            this.repeat = $('#repeat');
-            this.soundCtr = this.player.find('input[type=range]');
-            this.loading = $('#loading');
-            this.oauth = $('#oauth');
-
-            this.player.click(function () {
-                window.open(doubanlink.href);
-            });
-
-            this.player.find('header, section, footer').click(function (e) {
-                e.stopPropagation();
-            });
-
-            this.progress.parent().click(function (e) {
-                self.port.postMessage({cmd: 'skip', rate: e.offsetX/275});
-            }, false);
-
-            this.play.bind('click', function (e) {
-                self.switch();
-                e.preventDefault();
-            }, false);
-
-            this.player.bind('contextmenu', function (e) {
-                self.switch();
-                e.preventDefault();
-            }, false);
-
-            this.player
-            .mouseover(function (e) {
-                self.channel.css('opacity', 1);
-            }).mouseout(function () {
-                self.channel.css('opacity', 0);
-            });
-
-            this.player.find('#prev').click(function (e) {
-                self.port.postMessage({cmd: 'prev'});
-                e.preventDefault();
-            }, false);
-
-            this.player.find('#next').click(function (e) {
-                self.port.postMessage({cmd: 'next'});
-                e.preventDefault();
-            }, false);
-
-            this.player.find('#sound').click(function (e) {
-                self.soundCtr.toggle();
-                e.preventDefault();
-            }, false);
-
-            this.soundCtr.bind('change', function (e) {
-                self.port.postMessage({cmd: 'volume', value: e.target.value});
-            }, false);
-
-            this.player.find('#repeat').click(function (e) {
-                if (this.className === 'on') {
-                    this.className = '';
-                    self.port.postMessage({cmd: 'repeat', status: false});
-                }
-                else {
-                    this.className = 'on';
-                    self.port.postMessage({cmd: 'repeat', status: true});
-                }
-                e.preventDefault();
-            }, false);
-
-            this.player.find('#love').click(function (e) {
-                if (this.className === 'on') {
-                    this.className = '';
-                    self.port.postMessage({cmd: 'love', status: false});
-                }
-                else {
-                    this.className = 'on';
-                    self.port.postMessage({cmd: 'love', status: true});
-                }
-                e.preventDefault();
-            }, false);
-
-            this.player.find('#trash').click(function (e) {
-                e.preventDefault();
-                self.port.postMessage({cmd: 'trash'});
-            }, false);
-
-
-            $(document).keyup(function (e) {
-                switch (e.keyCode) {
-                case 37:
-                    self.port.postMessage({cmd: 'prev'});
-                    break;
-                case 38:
-                    self.soundCtr.val(self.soundCtr.val() + 5);
-                    self.port.postMessage({cmd: 'volume', value: self.soundCtr.val()});
-                    break;
-                case 39:
-                    self.port.postMessage({cmd: 'next'});
-                    break;
-                case 40:
-                    self.soundCtr.val(self.soundCtr.val() - 5);
-                    self.port.postMessage({cmd: 'volume', value: self.soundCtr.val()});
-                    break;
-                case 32:
-                    self.switch();
-                    break;
-                case 9:
-                    e.preventDefault();
-                    break;
-                }
-            });
-
-
-            this.channelInit();
-
-            this.channel.change(function (e) {
-                self.port.postMessage({cmd: 'channel', channel: Number(e.target.value)});
-            });
-
-            this.list.delegate('p', 'click', function () {
-                if (this.className !== 'active') {
-                    self.port.postMessage({cmd: 'index', index: Number(this.dataset.index)});
-                    winswitcher.prev();
-                }
-            });
-
-            this.list.bind('mousewheel', function (e) {
-                var trueList = self.list.find('section')[0];
-                var top = parseInt(getComputedStyle(trueList).getPropertyValue('top'), 10) + (e.wheelDelta>0?1:-1)*window.innerHeight/5;
-                var height = trueList.scrollHeight - window.innerHeight;
-                if (height <= 0) {return;}
-                if (top > 0) {top = 0;}
-                else if (top < -height) {top = -height;}
-                trueList.style.top = top + 'px'
-            }, false);
-
-            this.oauth.find('a').click(function (e) {
-                if (e.target.innerHTML === '确定') {
-                    window.open('http://douban.fm/');
-                }
-                self.oauth.css('top', '100%');
-                e.preventDefault();
-            });
-        },
-
-        switch: function () {
-            var self = this;
-            this.isPlay = !this.isPlay;
-            if (this.isPlay) {
-                this.play.css('backgroundImage', 'url(../assets/pause.png)');
             }
-            else {
-                this.play.css('backgroundImage', 'url(../assets/play.png)');
-            }
-            this.port.postMessage({cmd: 'switch', isPlay: self.isPlay});
-        },
+        }.bind(this));
+    },
 
-        onProgress: function (msg) {
+    render: function (msg) {
+        this.player.css('backgroundImage', 'url('+ msg.picture +')');
+        this.list.css('backgroundImage', 'url('+ msg.picture +')');
+        this.progress.val(msg.length ? msg.time / msg.length * 100 : 0);
+        this.progress.attr('title', this.strftime(msg.time));
+        this.title.html(msg.title);
+        this.artist.html(msg.artist + ' | ' + msg.albumtitle);
+        this.doubanlink.attr('href', msg.album);
+        this.soundCtr.val(msg.volume * 100);
+        if (msg.like) {
+            this.love.addClass('on');
+        }
+        else {
+            this.love.removeClass('on');
+        }
+        if (msg.isRepeat) {
+            this.repeat.addClass('on');
+        }
+        else {
+            this.repeat.removeClass('on');
+        }
+        if (msg.isPlay) {
+            this.play.css('backgroundImage', 'url(../assets/pause.png)');
+        }
+        else {
+            this.play.css('backgroundImage', 'url(../assets/play.png)');
+        }
+        this.isPlay = msg.isPlay;
+        if (!msg.canplaythrough){
+            this.message.text('载入中...');
+        }
+        this.channel.val(msg.channel);
+        this.channel.css('opacity', 1);
+        setTimeout(function () {
+            this.channel.css('opacity', 0);
+        }.bind(this), 3000);
+        this.listUpdate(msg.list, Number(msg.current));
+    },
+
+    events: {
+        'click #player': 'openAlbum',
+        'contextmenu #player': 'switch',
+        'mouseover #player': 'hover',
+        'mouseout #player': 'hover',
+        'click header': 'skip',
+        'click #play': 'switch',
+        'click #prev': 'onPrev',
+        'click #next': 'onNext',
+        'click #love': 'onLove',
+        'click #trash': 'onTrash',
+        'click #sound': 'onSound',
+        'click #repeat': 'onRepeat',
+        'change input': 'onSoundAjust',
+        'keyup': 'hotkey',
+        'change select': 'channelChange',
+        'click #list p': 'onIndex',
+        'mousewheel #list': 'scroll',
+        'click #oauth a': 'login'
+    },
+
+    onResize: function () {
+        this.player.width(window.innerWidth).height(window.innerHeight);
+        this.list.width(window.innerWidth).height(window.innerHeight);
+    },
+
+    onProgress: function (msg) {
+        if (msg.length) {
             this.progress.val(msg.time / msg.length * 100);
             if (msg.lrc) {
-                lrc.innerHTML = msg.lrc;
+                this.message.text(msg.lrc);
             }
-        },
-
-        onSet: function (msg) {
-            var self = this;
-            this.title.html(msg.title);
-            this.artist.html(msg.artist + ' | ' + msg.albumtitle);
-            this.doubanlink.attr('href', msg.album);
-            this.progress.val(msg.length ? msg.time / msg.length * 100 : 0);
-            this.player.css('backgroundImage', 'url('+ msg.picture +')');
-            this.list.css('backgroundImage', 'url('+ msg.picture +')');
-            this.soundCtr.val(msg.volume * 100);
-            if (msg.like) {love.className = 'on';}
-            else {love.className = '';}
-            if (msg.isRepeat) {repeat.className = 'on';}
-            else {repeat.className = '';}
-            this.isPlay = msg.isPlay;
-            if (this.isPlay) {
-                this.play.css('backgroundImage', 'url(../assets/pause.png)');
-            }
-            else {
-                this.play.css('backgroundImage', 'url(../assets/play.png)');
-            }
-
-            if (!msg.canplaythrough){
-                this.loading.show();
-            }
-
-            this.channel.val(msg.channel);
-            this.channel.css('opacity', 1);
-            setTimeout(function () {
-                self.channel.css('opacity', 0);
-            }, 3000);
-
-            this.listUpdate(msg.list, Number(msg.current));
-        },
-
-        progress: function () {
-        },
-
-        onCanplaythrough: function (msg) {
-            this.progress.val(0);
-            if (msg.status) {
-                lrc.innerHTML = '';
-            }
-            else {
-                lrc.innerHTML = '加载中...';
-            }
-        },
-
-        onChannel: function (msg) {
-            var self = this;
-            if (typeof msg.channel !== 'undefined') {
-                this.channel.val(msg.channel);
-                this.channel.css('opacity', 1);
-                setTimeout(function () {
-                    self.channel.css('opacity', 0);
-                }, 3000);
-            }
-            else {
-                this.oauth.css('top', '0');
-            }
-        },
-
-        channelInit: function () {
-            for (var i = 0, len = channelList.length, p ; i < len ; i += 1) {
-                p = $('<option>');
-                p.attr('value', channelList[i].channel_id);
-                p.html(channelList[i].name);
-                this.channel.append(p);
-            }
-            this.channel.val(localStorage.channel)
-        },
-
-        listUpdate: function(playList, current) {
-            var i = 0,
-            len = playList.length,
-            p,
-            trueList = this.list.find('section')[0];
-            trueList.innerHTML = '';
-            for (; i < len ; i += 1) {
-                p = document.createElement('p');
-                p.dataset.index = i;
-                if (current === i) {p.className = 'active';}
-                p.innerHTML = playList[i].title + ' - ' + playList[i].artist;
-                trueList.appendChild(p);
-            }
-            var offset = (current+1) * p.offsetHeight - window.innerHeight / 2;
-            if (offset < 0) {offset = 0;}
-            trueList.style.top = -offset+'px';
-        },
-
-        alert: function(msg) {
-            var node = message;
-            node.innerHTML = msg;
-            node.style.opacity = '1';
-            setTimeout(function () {
-                node.style.opacity = '0';
-            }, 5000);
         }
+    },
 
-    });
+    onCanplaythrough: function (msg) {
+        this.progress.val(0);
+        if (msg.status) {
+            this.message.text('');
+        }
+        else {
+            this.message.text('载入中...');
+        }
+    },
 
-    new PlayerUI();
+    onChannel: function (msg) {
+        if (typeof msg.channel === 'undefined') {
+        }
+        else {
+            this.channel.val(msg.channel);
+            this.oauth.css('top', '0');
+        }
+    },
 
+    openAlbum: function (e) {
+        if (e.target.id === 'player') {
+            window.open(this.doubanlink.attr('href'));
+        }
+    },
 
+    skip: function (e) {
+        this.port.postMessage({cmd: 'skip', rate: e.offsetX/275});
+    },
 
-    function strftime(seconds) {
+    switch: function (e) {
+        var self = this;
+        this.isPlay = !this.isPlay;
+        if (this.isPlay) {
+            this.play.css('backgroundImage', 'url(../assets/pause.png)');
+        }
+        else {
+            this.play.css('backgroundImage', 'url(../assets/play.png)');
+        }
+        this.port.postMessage({cmd: 'switch', isPlay: self.isPlay});
+        e.preventDefault();
+    },
+
+    hover: function (e) {
+        if (e.type === 'mouseover') {
+            this.channel.css('opacity', 1);
+        }
+        else {
+            this.channel.css('opacity', 0);
+        }
+    },
+
+    onPrev: function (e) {
+        this.port.postMessage({cmd: 'prev'});
+        e.preventDefault();
+    },
+
+    onNext: function (e) {
+        this.port.postMessage({cmd: 'next'});
+        e.preventDefault();
+    },
+
+    onSound: function (e) {
+        this.soundCtr.toggle();
+        e.preventDefault();
+    },
+
+    onSoundAjust: function (e) {
+        this.port.postMessage({cmd: 'volume', value: e.target.value});
+    },
+
+    onRepeat: function (e) {
+        if (this.repeat.hasClass('on')) {
+            this.repeat.removeClass('on');
+            this.port.postMessage({cmd: 'repeat', status: false});
+        }
+        else {
+            this.repeat.addClass('on');
+            this.port.postMessage({cmd: 'repeat', status: true});
+        }
+        e.preventDefault();
+    },
+
+    onLove: function (e) {
+        if (this.love.hasClass('on')) {
+            this.love.removeClass('on');
+            this.port.postMessage({cmd: 'love', status: false});
+        }
+        else {
+            this.love.addClass('on');
+            this.port.postMessage({cmd: 'love', status: true});
+        }
+        e.preventDefault();
+    },
+
+    onTrash: function (e) {
+        this.port.postMessage({cmd: 'trash'});
+        e.preventDefault();
+    },
+
+    hotkey: function (e) {
+        var self = this;
+        switch (e.keyCode) {
+            case 37:
+                this.port.postMessage({cmd: 'prev'});
+                break;
+            case 38:
+                this.soundCtr.val(this.soundCtr.val() + 5);
+                this.port.postMessage({cmd: 'volume', value: self.soundCtr.val()});
+                break;
+            case 39:
+                this.port.postMessage({cmd: 'next'});
+                break;
+            case 40:
+                this.soundCtr.val(this.soundCtr.val() - 5);
+                this.port.postMessage({cmd: 'volume', value: self.soundCtr.val()});
+                break;
+            case 32:
+                this.switch(e);
+                break;
+            case 9:
+                e.preventDefault();
+            break;
+        }
+    },
+
+    channelChange: function (e) {
+        this.port.postMessage({cmd: 'channel', channel: Number(e.target.value)});
+    },
+
+    onIndex: function (e) {
+        if (this.className !== 'active') {
+            this.port.postMessage({cmd: 'index', index: Number(e.target.dataset.index)});
+            this.winswitcher.prev();
+        }
+    },
+
+    scroll: function (e) {
+        var trueList = this.list.find('section')[0];
+        var top = parseInt(getComputedStyle(trueList).getPropertyValue('top'), 10) + (e.wheelDelta>0?1:-1)*window.innerHeight/5;
+        var height = trueList.scrollHeight - window.innerHeight;
+        if (height <= 0) {return;}
+        if (top > 0) {top = 0;}
+        else if (top < -height) {top = -height;}
+        trueList.style.top = top + 'px'
+    },
+
+    login: function (e) {
+        if (e.target.innerHTML === '确定') {
+            window.open('http://douban.fm/');
+        }
+        this.oauth.css('top', '100%');
+        e.preventDefault();
+    },
+
+    listUpdate: function(playList, current) {
+        var i = 0,
+        len = playList.length,
+        p,
+        trueList = this.list.find('section');
+        trueList.empty();
+        for (; i < len ; i += 1) {
+            p = document.createElement('p');
+            p.dataset.index = i;
+            if (current === i) {p.className = 'active';}
+            p.innerHTML = playList[i].title + ' - ' + playList[i].artist;
+            trueList.append(p);
+        }
+        var offset = (current+1) * p.offsetHeight - window.innerHeight / 2;
+        if (offset < 0) {offset = 0;}
+        trueList.css('top', -offset+'px');
+    },
+
+    strftime: function (seconds) {
         var minutes = Math.floor(seconds / 60), seconds = seconds % 60, str;
         str = (minutes > 9 ? minutes : '0' + minutes) + ':' + (seconds > 9 ? seconds : '0' + seconds);
         return str;
-    };
+    }
 
-})(this, this.document);
+});
+
+new dfm.Player();

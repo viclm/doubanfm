@@ -72,7 +72,13 @@ section {
     
 }
 
-#lrc {
+#player section a {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+#player section p {
     position: absolute;
     left: 0;
     bottom: 40px;
@@ -96,12 +102,6 @@ select {
     -webkit-padding-start: 8px;
     background: rgba(0, 0, 0, 0.5) url(../assets/select.png) right no-repeat;
     border: none;
-}
-
-#doubanlink {
-    display: block;
-    width: 100%;
-    height: 100%;
 }
 
 footer {
