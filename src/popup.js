@@ -115,7 +115,7 @@ dfm.Player = Backbone.View.extend({
         this.trash = $('#trash');
         this.sound = $('#sound');
         this.repeat = $('#repeat');
-        this.soundCtr = this.player.find('footer input');
+        this.soundCtr = this.player.find('footer input[type=range]');
         this.oauth = $('#oauth');
 
         for (var i = 0, len = channelList.length, p ; i < len ; i += 1) {
@@ -146,8 +146,8 @@ dfm.Player = Backbone.View.extend({
                 case 'error':
                     this.message.text(msg.msg);
                     break;
-                case 'channel':
-                    this.onChannel(msg);
+                case 'oauth':
+                    this.onOauth();
                     break;
             }
         }.bind(this));
@@ -184,7 +184,7 @@ dfm.Player = Backbone.View.extend({
         if (!msg.canplaythrough){
             this.message.text('载入中...');
         }
-        this.channel.val(msg.channel);
+        this.channel.val(localStorage.channel);
         this.channel.css('opacity', 1);
         setTimeout(function () {
             this.channel.css('opacity', 0);
@@ -193,11 +193,10 @@ dfm.Player = Backbone.View.extend({
     },
 
     events: {
-        'click #player': 'openAlbum',
+        'keyup': 'hotkey',
         'contextmenu #player': 'switch',
-        'mouseover #player': 'hover',
-        'mouseout #player': 'hover',
-        'click header': 'skip',
+        'click #player': 'openAlbum',
+        'click header': 'fastForward',
         'click #play': 'switch',
         'click #prev': 'onPrev',
         'click #next': 'onNext',
@@ -205,12 +204,12 @@ dfm.Player = Backbone.View.extend({
         'click #trash': 'onTrash',
         'click #sound': 'onSound',
         'click #repeat': 'onRepeat',
-        'change input': 'onSoundAjust',
-        'keyup': 'hotkey',
-        'change select': 'channelChange',
+        'change input[type=range]': 'onSoundAjust',
+        'change select': 'onChannel',
         'click #list p': 'onIndex',
-        'mousewheel #list': 'scroll',
-        'click #oauth a': 'login'
+        'mousewheel #list': 'onscroll',
+        'submit #oauth form': 'login',
+        'click #oauth a': 'undoLogin'
     },
 
     onResize: function () {
@@ -237,13 +236,67 @@ dfm.Player = Backbone.View.extend({
         }
     },
 
-    onChannel: function (msg) {
-        if (typeof msg.channel === 'undefined') {
+    onOauth: function (msg) {
+        var self = this;
+        if (localStorage.username) {
+            this.oauth.find('[name=alias]').val(base64.decode(localStorage.username));
         }
-        else {
-            this.channel.val(msg.channel);
-            this.oauth.css('top', '0');
+        if (localStorage.password) {
+            this.oauth.find('[name=form_password]').val(base64.decode(localStorage.password));
         }
+        $.ajax({
+            url: 'http://douban.fm/j/new_captcha',
+            type: 'get',
+            dataType: 'json',
+            headers: {
+                Referer: 'http://douban.fm/'
+            },
+            success: function (data) {
+                self.oauth.find('[type=hidden]').val(data);
+                self.oauth.find('img').attr('src', 'http://douban.fm/misc/captcha?size=m&id=' + data);
+            }
+        });
+        this.oauth.css('top', '0');
+    },
+
+    login: function (e) {
+        var form = $(e.target), mask = $('<div class="mask">登陆中...</div>').appendTo(this.oauth), self = this;
+        form.find('p').remove();
+        $.post('http://douban.fm/j/login', form.serialize()+'&source=radio&remember=on', function (data) {
+            if (data.r === 1) {
+                if (data.err_no === 1011) {
+                    $.ajax({
+                        url: 'http://douban.fm/j/new_captcha',
+                        type: 'get',
+                        dataType: 'json',
+                        headers: {
+                            Referer: 'http://douban.fm/'
+                        },
+                        success: function (data) {
+                            form.find('[type=hidden]').val(data);
+                            form.find('img').attr('src', 'http://douban.fm/misc/captcha?size=m&id=' + data).prev().val('');
+                        }
+                    });
+                }
+                form.append($('<p>'+data.err_msg+'</p>'));
+            }
+            else if (data.r === 0) {
+                localStorage.username = base64.encode(form.find('[name=alias]').val());
+                localStorage.password = base64.encode(form.find('[name=form_password]').val());
+                self.oauth.css('top', '100%');
+                self.port.postMessage({cmd: 'channel'});
+            }
+            mask.remove();
+        }, 'json');
+
+        e.preventDefault();
+    },
+
+    undoLogin: function (e) {
+        this.oauth.css('top', '100%');
+        localStorage.channel = 1;
+        this.port.postMessage({cmd: 'channel'});
+        e.preventDefault();
     },
 
     openAlbum: function (e) {
@@ -252,7 +305,7 @@ dfm.Player = Backbone.View.extend({
         }
     },
 
-    skip: function (e) {
+    fastForward: function (e) {
         this.port.postMessage({cmd: 'skip', rate: e.offsetX/275});
     },
 
@@ -267,15 +320,6 @@ dfm.Player = Backbone.View.extend({
         }
         this.port.postMessage({cmd: 'switch', isPlay: self.isPlay});
         e.preventDefault();
-    },
-
-    hover: function (e) {
-        if (e.type === 'mouseover') {
-            this.channel.css('opacity', 1);
-        }
-        else {
-            this.channel.css('opacity', 0);
-        }
     },
 
     onPrev: function (e) {
@@ -352,8 +396,9 @@ dfm.Player = Backbone.View.extend({
         }
     },
 
-    channelChange: function (e) {
-        this.port.postMessage({cmd: 'channel', channel: Number(e.target.value)});
+    onChannel: function (e) {
+        localStorage.channel = this.channel.val();
+        this.port.postMessage({cmd: 'channel'});
     },
 
     onIndex: function (e) {
@@ -363,7 +408,7 @@ dfm.Player = Backbone.View.extend({
         }
     },
 
-    scroll: function (e) {
+    onscroll: function (e) {
         var trueList = this.list.find('section')[0];
         var top = parseInt(getComputedStyle(trueList).getPropertyValue('top'), 10) + (e.wheelDelta>0?1:-1)*window.innerHeight/5;
         var height = trueList.scrollHeight - window.innerHeight;
@@ -371,14 +416,6 @@ dfm.Player = Backbone.View.extend({
         if (top > 0) {top = 0;}
         else if (top < -height) {top = -height;}
         trueList.style.top = top + 'px'
-    },
-
-    login: function (e) {
-        if (e.target.innerHTML === '确定') {
-            window.open('http://douban.fm/');
-        }
-        this.oauth.css('top', '100%');
-        e.preventDefault();
     },
 
     listUpdate: function(playList, current) {

@@ -221,7 +221,7 @@ dfm.Player = Backbone.View.extend({
                             this.fetchSongs('n', function (loginNeeded) {
                                 var self = this;
                                 if (loginNeeded) {
-                                    port.postMessage({cmd: 'channel'});
+                                    port.postMessage({cmd: 'oauth'});
                                 }
                                 else {
                                     this.el.src = this.playList.at(0).get('url');
@@ -236,15 +236,13 @@ dfm.Player = Backbone.View.extend({
                         }
                         break;
                     case 'channel':
-                        localStorage.channel = msg.channel;
                         this.playList.remove(this.playList.models.slice(this.current + 1));
                         this.fetchSongs('n', function (loginNeeded) {
                             var self = this;
                             if (loginNeeded) {
-                                port.postMessage({cmd: 'channel', channel: localStorage.channel});
+                                port.postMessage({cmd: 'oauth'});
                             }
                             else {
-                                port.postMessage({cmd: 'channel'});
                                 this.current += 1;
                                 this.el.src = this.playList.at(this.current).get('url');
                                 if (this.isPlay) {
@@ -406,10 +404,10 @@ dfm.Player = Backbone.View.extend({
                 name: 'dbcl2'
             }, function (c) {
                 if (c) {
-                    fetch(c);
+                    fetch();
                 }
                 else {
-                    fn(true);
+                    if (fn) {fn(true);}
                 }
             });
         }
