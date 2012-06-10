@@ -269,7 +269,8 @@ dfm.Player = Backbone.View.extend({
         'loadstart': 'onloadstart',
         'canplaythrough': 'oncanplaythrough',
         'timeupdate': 'ontimeupdate',
-        'ended': 'onended'
+        'ended': 'onended',
+        'error': 'onerror'
     },
 
     onloadstart: function () {
@@ -358,6 +359,26 @@ dfm.Player = Backbone.View.extend({
         this.time = 0;
         this.el.play();
         this.p && this.p.postMessage(this.getCurrentSongInfo());
+    },
+
+    onerror: function () {
+        console.log('error');
+        this.playList.remove(this.playList.models.slice(this.current + 1));
+        this.fetchSongs('n', function (loginNeeded) {
+            var self = this;
+            if (loginNeeded) {
+                port.postMessage({cmd: 'oauth'});
+            }
+            else {
+                this.playList.remove(this.playList.at(this.current));
+                this.el.src = this.playList.at(this.current).get('url');
+                if (this.isPlay) {
+                    this.el.volume = Number(localStorage.volume) / 100;
+                    this.el.play();
+                }
+                this.p.postMessage(this.getCurrentSongInfo());
+            }
+        }.bind(this));
     },
 
     getCurrentSongInfo: function () {
