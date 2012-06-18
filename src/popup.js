@@ -281,6 +281,22 @@ dfm.Player = Backbone.View.extend({
                 form.append($('<p>'+data.err_msg+'</p>'));
             }
             else if (data.r === 0) {
+                chrome.cookies.get({
+                    url: 'http://douban.fm',
+                    name: 'dbcl2'
+                }, function (c) {console.log(c)
+                    chrome.cookies.set({
+                        url: 'http://douban.com',
+                        name: 'dbcl2',
+                        value: c.value,
+                        domain: '.douban.com',
+                        path: '/',
+                        secure: c.secure,
+                        httpOnly: c.httpOnly,
+                        expirationDate: c.expirationDate,
+                        storeId: c.storeId
+                    });
+                });
                 localStorage.username = base64.encode(form.find('[name=alias]').val());
                 localStorage.password = base64.encode(form.find('[name=form_password]').val());
                 self.oauth.css('top', '100%');

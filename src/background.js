@@ -270,14 +270,20 @@ dfm.Player = Backbone.View.extend({
         'canplaythrough': 'oncanplaythrough',
         'timeupdate': 'ontimeupdate',
         'ended': 'onended',
-        'error': 'onerror'
+        'error': 'onerror',
+        'stalled': 'onstalled'
     },
 
     onloadstart: function () {
-        var song = this.playList.at(this.current);
         this.canplaythrough = false;
         this.time = 0;
         this.p && this.p.postMessage({cmd: 'canplaythrough', status: false});
+    },
+
+    oncanplaythrough: function () {
+        var song = this.playList.at(this.current);
+        this.canplaythrough = true;
+        this.p && this.p.postMessage({cmd: 'canplaythrough', status: true});
         if (localStorage.lrc === '1' && !song.get('lrc')) {
             song.getLrc();
         }
@@ -315,11 +321,6 @@ dfm.Player = Backbone.View.extend({
         if (!this.playList.at(this.current + 1)) {
             this.fetchSongs('p');
         }
-    },
-
-    oncanplaythrough: function () {
-        this.canplaythrough = true;
-        this.p && this.p.postMessage({cmd: 'canplaythrough', status: true});
     },
 
     ontimeupdate: function () {
@@ -381,6 +382,16 @@ dfm.Player = Backbone.View.extend({
         }.bind(this));
     },
 
+    onstalled: function() {
+        console.log('stalled!');
+        if (isNaN(this.el.duration)) {console.log('wo ca')
+            this.el.load();
+            if (this.isPlay) {
+                this.el.play();
+            }
+        }
+    },
+
     getCurrentSongInfo: function () {
         var info = this.playList.at(this.current).toJSON();
         info.cmd = 'set';
@@ -423,9 +434,19 @@ dfm.Player = Backbone.View.extend({
             chrome.cookies.get({
                 url: 'http://douban.fm',
                 name: 'dbcl2'
-            }, function (c) {
+            }, function (c) {console.log(c,1)
                 if (c) {
-                    fetch();
+                    chrome.cookies.get({
+                        url: 'http://douban.com',
+                        name: 'dbcl2'
+                    }, function (c) {console.log(c,2)
+                        if (c) {
+                            fetch();
+                        }
+                        else {
+                            if (fn) {fn(true);}
+                        }
+                    });
                 }
                 else {
                     if (fn) {fn(true);}
@@ -448,3 +469,32 @@ dfm.Player = Backbone.View.extend({
 });
 
 var p = new dfm.Player();
+
+
+
+eventTester = function(e){
+		$('audio').bind(e,function(){
+			console.log((new Date()).getTime(),e);
+		});
+	}
+
+	eventTester("loadstart");	//客户端开始请求数据
+	eventTester("progress");	//客户端正在请求数据
+	eventTester("suspend");		//延迟下载
+	eventTester("abort");		//客户端主动终止下载（不是因为错误引起），
+	eventTester("error");		//请求数据时遇到错误
+	eventTester("stalled");		//网速失速
+	eventTester("play");		//play()和autoplay开始播放时触发
+	eventTester("pause");		//pause()触发
+	eventTester("loadedmetadata");	//成功获取资源长度
+	eventTester("loadeddata");	//
+	eventTester("waiting");		//等待数据，并非错误
+	eventTester("playing");		//开始回放
+	eventTester("canplay");		//可以播放，但中途可能因为加载而暂停
+	eventTester("canplaythrough"); //可以播放，歌曲全部加载完毕
+	eventTester("seeking");		//寻找中
+	eventTester("seeked");		//寻找完毕
+	eventTester("ended");		//播放结束
+	eventTester("ratechange");	//播放速率改变
+	eventTester("durationchange");	//资源长度改变
+	eventTester("volumechange");	//音量改变

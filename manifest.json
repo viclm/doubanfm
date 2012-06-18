@@ -24,6 +24,7 @@
         "notifications",
         "cookies",
         "http://douban.fm/*",
+        "http://douban.com/",
         "http://ting.baidu.com/*"
     ]
 }
