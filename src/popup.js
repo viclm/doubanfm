@@ -247,11 +247,8 @@ dfm.Player = Backbone.View.extend({
         $.ajax({
             url: 'http://douban.fm/j/new_captcha',
             type: 'get',
-            dataType: 'json',
-            headers: {
-                Referer: 'http://douban.fm/'
-            },
             success: function (data) {
+                data = data.slice(1,-1);
                 self.oauth.find('[type=hidden]').val(data);
                 self.oauth.find('img').attr('src', 'http://douban.fm/misc/captcha?size=m&id=' + data);
             }
@@ -268,11 +265,8 @@ dfm.Player = Backbone.View.extend({
                     $.ajax({
                         url: 'http://douban.fm/j/new_captcha',
                         type: 'get',
-                        dataType: 'json',
-                        headers: {
-                            Referer: 'http://douban.fm/'
-                        },
                         success: function (data) {
+                            data = data.slice(1,-1);
                             form.find('[type=hidden]').val(data);
                             form.find('img').attr('src', 'http://douban.fm/misc/captcha?size=m&id=' + data).prev().val('');
                         }
