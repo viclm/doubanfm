@@ -147,7 +147,7 @@ dfm.Player = Backbone.View.extend({
                     this.message.text(msg.msg);
                     break;
                 case 'oauth':
-                    this.onOauth();
+                    this.onOauth(msg);
                     break;
             }
         }.bind(this));
@@ -236,13 +236,14 @@ dfm.Player = Backbone.View.extend({
         }
     },
 
-    onOauth: function (msg) {
-        var self = this;
+    onOauth: function (msg) {console.log(msg)
+        var self = this, form = this.oauth.find('form').hide().eq(1);
+        form.show();
         if (localStorage.username) {
-            this.oauth.find('[name=alias]').val(base64.decode(localStorage.username));
+            form.find('input').eq(2).val(base64.decode(localStorage.username));
         }
         if (localStorage.password) {
-            this.oauth.find('[name=form_password]').val(base64.decode(localStorage.password));
+            form.find('[name=form_password]').val(base64.decode(localStorage.password));
         }
         var image = new Image();
         image.onerror = function () {
@@ -251,8 +252,8 @@ dfm.Player = Backbone.View.extend({
                 type: 'get',
                 success: function (data) {
                     data = data.slice(1,-1);
-                    self.oauth.find('[type=hidden]').val(data);
-                    self.oauth.find('img').attr('src', 'http://douban.fm/misc/captcha?size=m&id=' + data);
+                    form.find('[name=captcha_id]').val(data);
+                    form.find('img').attr('src', 'http://douban.fm/misc/captcha?size=m&id=' + data);
                 }
             });
         }
@@ -263,45 +264,54 @@ dfm.Player = Backbone.View.extend({
     login: function (e) {
         var form = $(e.target), mask = $('<div class="mask">登陆中...</div>').appendTo(this.oauth), self = this;
         form.find('p').remove();
-        $.post('http://douban.fm/j/login', form.serialize()+'&source=radio&remember=on', function (data) {
-            if (data.r === 1) {
-                if (data.err_no === 1011) {
-                    $.ajax({
-                        url: 'http://douban.fm/j/new_captcha',
-                        type: 'get',
-                        success: function (data) {
-                            data = data.slice(1,-1);
-                            form.find('[type=hidden]').val(data);
-                            form.find('img').attr('src', 'http://douban.fm/misc/captcha?size=m&id=' + data).prev().val('');
-                        }
-                    });
+        $.ajax({
+            url: form.attr('action'),
+            type: form.attr('type'),
+            data: form.serialize(),
+            dataType: 'json',
+            success: function (data) {
+                if (data.r === 1) {
+                    if (data.err_no === 1011) {
+                        $.ajax({
+                            url: 'http://douban.fm/j/new_captcha',
+                            type: 'get',
+                            success: function (data) {
+                                data = data.slice(1,-1);
+                                form.find('[name=captcha_id]').val(data);
+                                form.find('img').attr('src', 'http://douban.fm/misc/captcha?size=m&id=' + data).prev().val('');
+                            }
+                        });
+                    }
+                    form.append($('<p>'+data.err_msg+'</p>'));
                 }
-                form.append($('<p>'+data.err_msg+'</p>'));
-            }
-            else if (data.r === 0) {
-                chrome.cookies.get({
-                    url: 'http://douban.fm',
-                    name: 'dbcl2'
-                }, function (c) {console.log(c)
-                    chrome.cookies.set({
-                        url: 'http://douban.com',
-                        name: 'dbcl2',
-                        value: c.value,
-                        domain: '.douban.com',
-                        path: '/',
-                        secure: c.secure,
-                        httpOnly: c.httpOnly,
-                        expirationDate: c.expirationDate,
-                        storeId: c.storeId
+                else if (data.r === 0) {
+                    chrome.cookies.get({
+                        url: 'http://douban.fm',
+                        name: 'dbcl2'
+                    }, function (c) {console.log(c)
+                        chrome.cookies.set({
+                            url: 'http://douban.com',
+                            name: 'dbcl2',
+                            value: c.value,
+                            domain: '.douban.com',
+                            path: '/',
+                            secure: c.secure,
+                            httpOnly: c.httpOnly,
+                            expirationDate: c.expirationDate,
+                            storeId: c.storeId
+                        });
                     });
-                });
-                localStorage.username = base64.encode(form.find('[name=alias]').val());
-                localStorage.password = base64.encode(form.find('[name=form_password]').val());
-                self.oauth.css('top', '100%');
-                self.port.postMessage({cmd: 'channel'});
+                    localStorage.username = base64.encode(form.find('[name=alias]').val());
+                    localStorage.password = base64.encode(form.find('[name=form_password]').val());
+                    self.oauth.css('top', '100%');
+                    self.port.postMessage({cmd: 'channel'});
+                }
+                mask.remove();
+            },
+            error: function (xhr, err) {
+                console.log(xhr, err)
             }
-            mask.remove();
-        }, 'json');
+        });
 
         e.preventDefault();
     },

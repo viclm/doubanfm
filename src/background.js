@@ -221,7 +221,7 @@ dfm.Player = Backbone.View.extend({
                             this.fetchSongs('n', function (loginNeeded) {
                                 var self = this;
                                 if (loginNeeded) {
-                                    port.postMessage({cmd: 'oauth'});
+                                    port.postMessage({cmd: 'oauth', type: loginNeeded});
                                 }
                                 else {
                                     this.el.src = this.playList.at(0).get('url');
@@ -240,7 +240,7 @@ dfm.Player = Backbone.View.extend({
                         this.fetchSongs('n', function (loginNeeded) {
                             var self = this;
                             if (loginNeeded) {
-                                port.postMessage({cmd: 'oauth'});
+                                port.postMessage({cmd: 'oauth', type: loginNeeded});
                             }
                             else {
                                 this.current += 1;
@@ -368,7 +368,7 @@ dfm.Player = Backbone.View.extend({
         this.fetchSongs('n', function (loginNeeded) {
             var self = this;
             if (loginNeeded) {
-                port.postMessage({cmd: 'oauth'});
+                port.postMessage({cmd: 'oauth', type: loginNeeded});
             }
             else {
                 this.playList.remove(this.playList.at(this.current));
@@ -434,12 +434,31 @@ dfm.Player = Backbone.View.extend({
             chrome.cookies.get({
                 url: 'http://douban.com',
                 name: 'dbcl2'
-            }, function (c) {console.log(c,1)
-                if (c) {
+            }, function (c) {console.log(c, 'com')
+                if (c === null) {
+                    chrome.cookies.remove({
+                            url: 'http://douban.fm',
+                            name: 'dbcl2'
+                        },
+                        function () {
+                        chrome.cookies.get({
+                            url: 'http://douban.fm',
+                            name: 'dbcl2'
+                        }, function (c) {console.log(c, 'fm')
+                            if (c) {
+                                fetch();
+                            }
+                            else {
+                                if (fn) {fn(true);}
+                            }
+                        });
+                    })
+                }
+                else {
                     chrome.cookies.get({
                         url: 'http://douban.fm',
                         name: 'dbcl2'
-                    }, function (c) {console.log(c,2)
+                    }, function (c) {console.log(c, 'fm')
                         if (c) {
                             fetch();
                         }
@@ -447,9 +466,6 @@ dfm.Player = Backbone.View.extend({
                             if (fn) {fn(true);}
                         }
                     });
-                }
-                else {
-                    if (fn) {fn(true);}
                 }
             });
         }

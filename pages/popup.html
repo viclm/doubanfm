@@ -40,15 +40,29 @@
             </div>
         </div>
         <div id="oauth">
-            <form>
-            <h2>登陆</h2>
-            <input type="text" name="alias" placeholder="用户名" required />
-            <input type="password" name="form_password" placeholder="密码" required />
-            <input type="hidden" name="captcha_id" />
-            <input type="text" name="captcha_solution" placeholder="验证码" required />
-            <img src="" alt="" />
-            <input type="submit" value="登陆" />
-            <a href="#">取消</a>
+            <form type="post" action="https://www.douban.com/accounts/login">
+                <h2>登陆</h2>
+                <input type="hidden" name="souce" value="simple" />
+                <input type="hidden" name="remember" value="on" />
+                <input type="text" name="form_email" placeholder="用户名" required />
+                <input type="password" name="form_password" placeholder="密码" required />
+                <input type="hidden" name="captcha_id" />
+                <input type="text" name="captcha_solution" placeholder="验证码" required />
+                <img src="" alt="" />
+                <input type="submit" value="登陆" />
+                <a href="#">取消</a>
+            </form>
+            <form type="post" action="http://douban.fm/j/login">
+                <h2>登陆</h2>
+                <input type="hidden" name="souce" value="radio" />
+                <input type="hidden" name="remember" value="on" />
+                <input type="text" name="alias" placeholder="用户名" required />
+                <input type="password" name="form_password" placeholder="密码" required />
+                <input type="hidden" name="captcha_id" />
+                <input type="text" name="captcha_solution" placeholder="验证码" required />
+                <img src="" alt="" />
+                <input type="submit" value="登陆" />
+                <a href="#">取消</a>
             </form>
         </div>
 
