@@ -244,15 +244,19 @@ dfm.Player = Backbone.View.extend({
         if (localStorage.password) {
             this.oauth.find('[name=form_password]').val(base64.decode(localStorage.password));
         }
-        $.ajax({
-            url: 'http://douban.fm/j/new_captcha',
-            type: 'get',
-            success: function (data) {
-                data = data.slice(1,-1);
-                self.oauth.find('[type=hidden]').val(data);
-                self.oauth.find('img').attr('src', 'http://douban.fm/misc/captcha?size=m&id=' + data);
-            }
-        });
+        var image = new Image();
+        image.onerror = function () {
+            $.ajax({
+                url: 'http://douban.fm/j/new_captcha',
+                type: 'get',
+                success: function (data) {
+                    data = data.slice(1,-1);
+                    self.oauth.find('[type=hidden]').val(data);
+                    self.oauth.find('img').attr('src', 'http://douban.fm/misc/captcha?size=m&id=' + data);
+                }
+            });
+        }
+        image.src = 'http://douban.fm/j/new_captcha';
         this.oauth.css('top', '0');
     },
 
