@@ -383,8 +383,16 @@ dfm.Player = Backbone.View.extend({
     },
 
     onstalled: function() {
-        console.log('stalled!');
-        if (isNaN(this.el.duration)) {console.log('wo ca')
+        if (isNaN(this.el.duration)) {
+            var song = this.playList.at(this.current),
+                stalledCount = song.get('stalledCount') || 0;
+            stalledCount += 1;
+            console.log('wo ca', stalledCount)
+            if (stalledCount > 3) {
+                this.onerror();
+                return;
+            }
+            song.set({stalledCount: stalledCount});
             this.el.load();
             if (this.isPlay) {
                 this.el.play();
