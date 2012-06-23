@@ -319,7 +319,9 @@ dfm.Player = Backbone.View.extend({
         }
         chrome.browserAction.setTitle({title: song.get('title')+'-'+song.get('artist')});
         if (!this.playList.at(this.current + 1)) {
-            this.fetchSongs('p');
+            this.fetchSongs('p', function () {
+                this.p && this.p.postMessage(this.getCurrentSongInfo());
+            }.bind(this));
         }
     },
 
@@ -348,7 +350,7 @@ dfm.Player = Backbone.View.extend({
                 this.el.src = this.playList.at(this.current).get('url');
             }
             else {
-                this.fetchSongs(function () {
+                this.fetchSongs('p', function () {
                     self.current += 1;
                     self.el.src = playList.at(self.current).get('url');
                     if (self.isPlay) {self.el.play();}
