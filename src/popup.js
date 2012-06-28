@@ -258,7 +258,7 @@ dfm.Player = Backbone.View.extend({
             });
         }
         image.src = 'http://douban.fm/j/new_captcha';
-        this.oauth.css('top', '0');
+        this.oauth.show().css('top', '0');
     },
 
     login: function (e) {
