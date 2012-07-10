@@ -12,11 +12,13 @@ dfm.Song = Backbone.Model.extend({
 
     getLrc: function () {
         var self = this;
-        $.ajaxJSONP({
+        $.ajax({
+            type: 'get',
             url: 'http://openapi.baidu.com/public/2.0/mp3/info/suggestion',
             data: 'format=json&word='+encodeURIComponent(self.get('title').replace(/\(.+\)$/, ''))+'&callback=?',
+            dataType: 'text',
             success: function (data) {
-                data = data.song;
+                data = JSON.parse(data.slice(1, -2)).song;
                 if (!data) {return;}
                 for (var i = 0, len = data.length ; i < len ; i += 1) {
                     if (self.get('artist').toLowerCase().indexOf(data[i].artistname.toLowerCase()) > -1) {
@@ -36,8 +38,7 @@ dfm.Song = Backbone.Model.extend({
                         break;
                     }
                 }
-            },
-            complete: function (){}
+            }
         });
     },
 
@@ -87,8 +88,10 @@ dfm.PlayList = Backbone.Collection.extend({
 
 dfm.Player = Backbone.View.extend({
 
-    el: 'audio',
-
+    tagName: 'audio',
+    attributes: {
+        preload: 'auto'
+    },
     p: null,
     playList: [],
     current: 0,
@@ -105,7 +108,7 @@ dfm.Player = Backbone.View.extend({
         else {
             chrome.browserAction.onClicked.addListener(function(tab) {
                 if (this.p) {
-                    chrome.windows.update(this.p.tab.windowId, {focused: true});
+                    chrome.windows.update(this.p.sender.tab.windowId, {focused: true});
                 }
                 else {
                     chrome.windows.create({
@@ -287,7 +290,7 @@ dfm.Player = Backbone.View.extend({
         if (localStorage.lrc === '1' && !song.get('lrc')) {
             song.getLrc();
         }
-        if (localStorage.notify === '1') {
+        if (localStorage.notify === '1') {console.log(this.p)
             if (!this.p) {
                 var notification = webkitNotifications.createNotification(
                     '../assets/icon_medium.png',
@@ -300,8 +303,8 @@ dfm.Player = Backbone.View.extend({
                     notification.cancel();
                 }, 5000);
             }
-            else if (this.p.tab && this.p.tab.id !== -1) {
-                chrome.windows.get(this.p.tab.windowId, function (win) {
+            else if (this.p.sender.tab && this.p.sender.tab.id !== -1) {
+                chrome.windows.get(this.p.sender.tab.windowId, function (win) {
                     if (!win.focused) {
                         var notification = webkitNotifications.createNotification(
                             '../assets/icon_medium.png',

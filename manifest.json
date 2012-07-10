@@ -1,6 +1,7 @@
 {
     "name": "豆瓣FM 精美版",
     "version": "5.6.5",
+    "manifest_version": 2,
     "description": "改变的不单单是外表, 完全的播放控制, 歌词同步, 去插播广告",
 
     "icons": {
@@ -14,7 +15,9 @@
         "default_icon": "assets/icon_small.png"
     },
 
-    "background_page": "pages/background.html",
+    "background": {
+        "scripts": ["src/zepto.min.js", "src/underscore-min.js", "src/backbone-min.js", "src/background.js"]
+    },
 
     "options_page": "pages/options.html",
 
@@ -25,7 +28,8 @@
         "cookies",
         "http://douban.fm/*",
         "http://douban.com/",
-        "http://ting.baidu.com/*"
+        "http://ting.baidu.com/*",
+        "http://openapi.baidu.com/*"
     ]
 }
 
