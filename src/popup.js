@@ -193,6 +193,8 @@ dfm.Player = Backbone.View.extend({
     },
 
     events: {
+        'mouseover': 'onhover',
+        'mouseout': 'onhover',
         'keyup': 'hotkey',
         'contextmenu #player': 'switch',
         'click #player': 'openAlbum',
@@ -210,6 +212,14 @@ dfm.Player = Backbone.View.extend({
         'mousewheel #list': 'onscroll',
         'submit #oauth form': 'login',
         'click #oauth a': 'undoLogin'
+    },
+
+    onhover: function (e) {
+        var target = document.body, r = e.relatedTarget;
+        while (r && r !== target) {r = r.parentNode;}
+        if (r !== target) {
+            this.port.postMessage({cmd: 'event', type: e.type});
+        }
     },
 
     onResize: function () {

@@ -31,6 +31,15 @@ body > div > div {
     float: left;
 }
 
+@media screen and (max-height: 160px) {
+    body {
+        min-height: 160px;
+    }
+    body > div > div {
+        min-height: 160px;
+    }
+}
+
 header, footer {
     background-color: rgba(0, 0, 0, 0.5);
     padding: 5px 10px 10px 10px;

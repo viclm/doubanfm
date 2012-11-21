@@ -99,9 +99,11 @@ dfm.Player = Backbone.View.extend({
     isPlay: true,
     isRepeat: false,
     time: 0,
+    notify: null,
 
     initialize: function () {
         this.playList = new dfm.PlayList();
+        this.notify = this.notifyInit();
         if (localStorage.pin === '0') {
             chrome.browserAction.setPopup({popup: '../pages/popup.html'});
         }
@@ -121,12 +123,21 @@ dfm.Player = Backbone.View.extend({
             }.bind(this));
         }
 
-        chrome.extension.onConnect.addListener(function(port) {
+
+        chrome.extension.onConnect.addListener(function(port) {console.log(port)
             if (port.name === 'fm') {
                 this.p = port;
                 port.onMessage.addListener(function (msg, port) {
                     var self = this;
                     switch (msg.cmd) {
+                    case 'event':
+                        if (msg.type === 'mouseover') {
+                            this.notify.clear();
+                        }
+                        else {
+                            this.notify.start();
+                        }
+                        break;
                     case 'skip':
                         this.el.currentTime = this.el.duration * msg.rate;
                         break;
@@ -259,7 +270,7 @@ dfm.Player = Backbone.View.extend({
                     }
                 }.bind(this));
 
-                port.onDisconnect.addListener(function (port) {
+                port.onDisconnect.addListener(function (port) {console.log(port, 'die')
                     if (port.name === 'fm') {
                         this.p = null;
                     }
@@ -277,10 +288,33 @@ dfm.Player = Backbone.View.extend({
         'stalled': 'onstalled'
     },
 
+    notifyInit: function () {
+        var notify, timer = null;
+        return {
+            show: function () {
+                notify = webkitNotifications.createHTMLNotification('../pages/popup.html');
+                notify.show();
+                this.start();
+            },
+            start: function () {
+                timer = setTimeout(function () {
+                    notify.cancel();
+                    timer = null;
+                }, 3000);
+            },
+            clear: function () {
+                clearTimeout(timer);
+                timer = null;
+            }
+        }
+    },
+
     onloadstart: function () {
         this.canplaythrough = false;
         this.time = 0;
         this.p && this.p.postMessage({cmd: 'canplaythrough', status: false});
+        this.notify.show();
+
     },
 
     oncanplaythrough: function () {
@@ -290,34 +324,9 @@ dfm.Player = Backbone.View.extend({
         if (localStorage.lrc === '1' && !song.get('lrc')) {
             song.getLrc();
         }
-        if (localStorage.notify === '1') {console.log(this.p)
+        if (localStorage.notify === '1') {
             if (!this.p) {
-                var notification = webkitNotifications.createNotification(
-                    '../assets/icon_medium.png',
-                    song.get('title'),
-                    song.get('artist')
-                );
-
-                notification.show();
-                setTimeout(function () {
-                    notification.cancel();
-                }, 5000);
-            }
-            else if (this.p.sender.tab && this.p.sender.tab.id !== -1) {
-                chrome.windows.get(this.p.sender.tab.windowId, function (win) {
-                    if (!win.focused) {
-                        var notification = webkitNotifications.createNotification(
-                            '../assets/icon_medium.png',
-                            song.get('title'),
-                            song.get('artist')
-                        );
-
-                        notification.show();
-                        setTimeout(function () {
-                            notification.cancel();
-                        }, 5000);
-                    }
-                });
+                this.notify.show();
             }
         }
         chrome.browserAction.setTitle({title: song.get('title')+'-'+song.get('artist')});
@@ -447,7 +456,7 @@ dfm.Player = Backbone.View.extend({
             chrome.cookies.get({
                 url: 'http://douban.com',
                 name: 'dbcl2'
-            }, function (c) {console.log(c, 'com')
+            }, function (c) {//console.log(c, 'com')
                 if (c === null) {
                     chrome.cookies.remove({
                             url: 'http://douban.fm',
@@ -471,7 +480,7 @@ dfm.Player = Backbone.View.extend({
                     chrome.cookies.get({
                         url: 'http://douban.fm',
                         name: 'dbcl2'
-                    }, function (c) {console.log(c, 'fm')
+                    }, function (c) {//console.log(c, 'fm')
                         if (c) {
                             fetch();
                         }
