@@ -298,7 +298,6 @@ dfm.Player = Backbone.View.extend({
         return {
             show: function () {
                 notify = webkitNotifications.createHTMLNotification('../pages/popup.html');
-                //notify.addEventListener('close', function (e) {console.log(1)}, false);
                 notify.show();
                 visible = true;
                 this.timer();
@@ -468,7 +467,7 @@ dfm.Player = Backbone.View.extend({
             chrome.cookies.get({
                 url: 'http://douban.com',
                 name: 'dbcl2'
-            }, function (c) {//console.log(c, 'com')
+            }, function (c) {
                 if (c === null) {
                     chrome.cookies.remove({
                             url: 'http://douban.fm',
@@ -492,7 +491,7 @@ dfm.Player = Backbone.View.extend({
                     chrome.cookies.get({
                         url: 'http://douban.fm',
                         name: 'dbcl2'
-                    }, function (c) {//console.log(c, 'fm')
+                    }, function (c) {
                         if (c) {
                             fetch();
                         }

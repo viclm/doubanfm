@@ -100,8 +100,6 @@ dfm.Player = Backbone.View.extend({
 
     initialize: function () {
 
-        this.onResize();
-
         this.player = $('#player');
         this.list = $('#list');
         this.progress = this.player.find('header progress');
@@ -128,8 +126,6 @@ dfm.Player = Backbone.View.extend({
         }
         this.channel.val(localStorage.channel);
 
-        this.onResize();
-        $(window).resize(this.onResize.bind(this));
         this.winswitcher = new dfm.Winswitcher();
 
         this.port = chrome.extension.connect({name: 'fm'});
@@ -153,6 +149,9 @@ dfm.Player = Backbone.View.extend({
                     break;
             }
         }.bind(this));
+
+        this.onResize();
+        $(window).resize(this.onResize.bind(this));
     },
 
     render: function (msg) {
@@ -226,8 +225,6 @@ dfm.Player = Backbone.View.extend({
 
     onResize: function () {
         $('body').width(window.innerWidth).height(window.innerHeight);
-        //this.player.width(window.innerWidth).height(window.innerHeight);
-        //this.list.width(window.innerWidth).height(window.innerHeight);
     },
 
     onProgress: function (msg) {
@@ -249,14 +246,27 @@ dfm.Player = Backbone.View.extend({
         }
     },
 
-    onOauth: function (msg) {console.log(msg)
-        var self = this, form = this.oauth.find('form').hide().eq(1);
-        form.show();
+    onOauth: function (msg) {
+        var form = ('<form type="post" action="http://douban.fm/j/login">\
+                <h2>登陆</h2>\
+                <input type="hidden" name="souce" value="radio" />\
+                <input type="hidden" name="remember" value="on" />\
+                <input type="text" name="alias" placeholder="用户名" required />\
+                <input type="password" name="form_password" placeholder="密码" required />\
+                <input type="hidden" name="captcha_id" />\
+                <input type="text" name="captcha_solution" placeholder="验证码" required />\
+                <img src="" alt="" />\
+                <input type="submit" value="登陆" />\
+                <a href="#">取消</a>\
+            </form>'), self = this;
+        this.oauth.html(form);
+        //var self = this, form = this.oauth.find('form').hide().eq(1);
+        //form.show();
         if (localStorage.username) {
-            form.find('input').eq(2).val(base64.decode(localStorage.username));
+            this.oauth.find('input').eq(2).val(base64.decode(localStorage.username));
         }
         if (localStorage.password) {
-            form.find('[name=form_password]').val(base64.decode(localStorage.password));
+            this.oauth.find('[name=form_password]').val(base64.decode(localStorage.password));
         }
         var image = new Image();
         image.onerror = function () {
@@ -265,8 +275,8 @@ dfm.Player = Backbone.View.extend({
                 type: 'get',
                 success: function (data) {
                     data = data.slice(1,-1);
-                    form.find('[name=captcha_id]').val(data);
-                    form.find('img').attr('src', 'http://douban.fm/misc/captcha?size=m&id=' + data);
+                    self.oauth.find('[name=captcha_id]').val(data);
+                    self.oauth.find('img').attr('src', 'http://douban.fm/misc/captcha?size=m&id=' + data);
                 }
             });
         }
@@ -322,7 +332,10 @@ dfm.Player = Backbone.View.extend({
                 mask.remove();
             },
             error: function (xhr, err) {
-                console.log(xhr, err)
+                console.log(xhr, err);
+                mask.remove();
+                self.oauth.css('top', '100%');
+                self.port.postMessage({cmd: 'channel'});
             }
         });
 
