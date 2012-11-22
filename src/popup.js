@@ -100,6 +100,8 @@ dfm.Player = Backbone.View.extend({
 
     initialize: function () {
 
+        this.onResize();
+
         this.player = $('#player');
         this.list = $('#list');
         this.progress = this.player.find('header progress');
@@ -196,7 +198,7 @@ dfm.Player = Backbone.View.extend({
         'mouseover': 'onhover',
         'mouseout': 'onhover',
         'keyup': 'hotkey',
-        'contextmenu #player': 'switch',
+        //'contextmenu #player': 'switch',
         'click #player': 'openAlbum',
         'click progress': 'fastForward',
         'click #play': 'switch',
@@ -223,8 +225,9 @@ dfm.Player = Backbone.View.extend({
     },
 
     onResize: function () {
-        this.player.width(window.innerWidth).height(window.innerHeight);
-        this.list.width(window.innerWidth).height(window.innerHeight);
+        $('body').width(window.innerWidth).height(window.innerHeight);
+        //this.player.width(window.innerWidth).height(window.innerHeight);
+        //this.list.width(window.innerWidth).height(window.innerHeight);
     },
 
     onProgress: function (msg) {
@@ -478,4 +481,4 @@ dfm.Player = Backbone.View.extend({
 
 });
 
-new dfm.Player();
+new dfm.Player;

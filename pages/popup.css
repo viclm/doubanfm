@@ -4,8 +4,8 @@
 }
 body {
     font: 12px/18px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
-    min-width: 275px;
-    min-height: 275px;
+    width: 275px;
+    height: 275px;
     margin: 0;
     color: white;
     overflow: hidden;
@@ -25,19 +25,9 @@ body > div > div {
     background-image: none;
     background-color: #eee;
     height: 100%;
-    min-height: 275px;
-    width: 33.33%;
+    width: 50%;
     position: relative;
     float: left;
-}
-
-@media screen and (max-height: 160px) {
-    body {
-        min-height: 160px;
-    }
-    body > div > div {
-        min-height: 160px;
-    }
 }
 
 header, footer {

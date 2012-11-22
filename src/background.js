@@ -123,19 +123,30 @@ dfm.Player = Backbone.View.extend({
             }.bind(this));
         }
 
-
-        chrome.extension.onConnect.addListener(function(port) {console.log(port)
+        chrome.extension.onConnect.addListener(function(port) {
             if (port.name === 'fm') {
-                this.p = port;
+                if (this.p && this.notify.isVisible()) {
+                    this.notify.hide();
+                }
+                setTimeout(function () {this.p = port;}.bind(this), 100);
+
+                port.onDisconnect.addListener(function (port) {
+                    if (port.name === 'fm') {
+                        this.p = null;
+                    }
+                }.bind(this));
+
                 port.onMessage.addListener(function (msg, port) {
                     var self = this;
                     switch (msg.cmd) {
                     case 'event':
-                        if (msg.type === 'mouseover') {
-                            this.notify.clear();
-                        }
-                        else {
-                            this.notify.start();
+                        if (this.notify.isVisible()) {
+                            if (msg.type === 'mouseover') {
+                                this.notify.clear();
+                            }
+                            else {
+                                //this.notify.timer();
+                            }
                         }
                         break;
                     case 'skip':
@@ -269,12 +280,6 @@ dfm.Player = Backbone.View.extend({
                         break;
                     }
                 }.bind(this));
-
-                port.onDisconnect.addListener(function (port) {console.log(port, 'die')
-                    if (port.name === 'fm') {
-                        this.p = null;
-                    }
-                }.bind(this));
             }
         }.bind(this));
     },
@@ -289,22 +294,31 @@ dfm.Player = Backbone.View.extend({
     },
 
     notifyInit: function () {
-        var notify, timer = null;
+        var notify, visible = false, timer = null;
         return {
             show: function () {
                 notify = webkitNotifications.createHTMLNotification('../pages/popup.html');
+                //notify.addEventListener('close', function (e) {console.log(1)}, false);
                 notify.show();
-                this.start();
+                visible = true;
+                this.timer();
             },
-            start: function () {
+            hide: function () {
+                notify.cancel();
+                visible = false;
+            },
+            timer: function () {
                 timer = setTimeout(function () {
-                    notify.cancel();
+                    this.hide();
                     timer = null;
-                }, 3000);
+                }.bind(this), 5000);
             },
             clear: function () {
                 clearTimeout(timer);
                 timer = null;
+            },
+            isVisible: function () {
+                return visible;
             }
         }
     },
@@ -313,8 +327,6 @@ dfm.Player = Backbone.View.extend({
         this.canplaythrough = false;
         this.time = 0;
         this.p && this.p.postMessage({cmd: 'canplaythrough', status: false});
-        this.notify.show();
-
     },
 
     oncanplaythrough: function () {
