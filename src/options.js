@@ -34,13 +34,18 @@
     // Saves options to localStorage.
     function saveOptions(e) {
         var input = this.querySelector('input');
-        localStorage[input.name] = input.checked ? input.value : '0';
+        if (input.type === 'checkbox') {
+            localStorage[input.name] = input.checked ? input.value : '0';
+        }
+        else {
+            localStorage[input.name] = input.value;
+        }
     }
 
     // Restores select box state to saved value from localStorage.
     function restoreOptions() {
         var i, len, elements, elem, config;
-        elements = mainview.querySelectorAll('input[type=checkbox]');
+        elements = mainview.querySelectorAll('input[type=checkbox],input[type=radio]');
         for (i = 0, len = elements.length ; i < len ; i += 1) {
             elem = elements[i];
             elem.checked = localStorage[elem.name] === elem.value;
