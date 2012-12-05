@@ -197,7 +197,7 @@ dfm.Player = Backbone.View.extend({
         'mouseover': 'onhover',
         'mouseout': 'onhover',
         'keyup': 'hotkey',
-        //'contextmenu #player': 'switch',
+        'contextmenu #player': 'switch',
         'click #player': 'openAlbum',
         'click progress': 'fastForward',
         'click #play': 'switch',
