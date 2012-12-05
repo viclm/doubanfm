@@ -105,7 +105,7 @@ dfm.Player = Backbone.View.extend({
         this.playList = new dfm.PlayList();
         this.notify = this.notifyInit();
         if (localStorage.pin === '0') {
-            chrome.browserAction.setPopup({popup: '../pages/popup.html'});
+            chrome.browserAction.setPopup({popup: '../partials/popup.html'});
         }
         else {
             chrome.browserAction.onClicked.addListener(function(tab) {
