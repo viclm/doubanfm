@@ -297,8 +297,8 @@ dfm.Player = Backbone.View.extend({
         var notify, visible = false, timer = null, self = this;
         return {
             show: function () {
-                notify = localStorage.notifyStyle === '1' ? window.webkitNotifications.createNotification(
-        self.playList.at(self.current).get('picture'), self.playList.at(self.current).get('title'), self.playList.at(self.current).get('artist')) : webkitNotifications.createHTMLNotification('../pages/popup.html');
+                notify = localStorage.notifyStyle === '2' ? webkitNotifications.createHTMLNotification('../pages/popup.html'): window.webkitNotifications.createNotification(
+        self.playList.at(self.current).get('picture'), self.playList.at(self.current).get('title'), self.playList.at(self.current).get('artist'));
                 notify.show();
                 visible = true;
                 this.timer();
