@@ -93,7 +93,7 @@ select {
     -webkit-border-radius: 0;
     -webkit-padding-end: 20px;
     -webkit-padding-start: 8px;
-    background: rgba(0, 0, 0, 0.5) url(../assets/select.png) right no-repeat;
+    background: rgba(0, 0, 0, 0.5) url(../img/select.png) right no-repeat;
     border: none;
 }
 
@@ -116,39 +116,43 @@ footer > div {
 }
 
 #play {
-    background: url(../assets/play.png) no-repeat;
+    background: url(../img/play.png) no-repeat;
+}
+
+#play.pause {
+    background: url(../img/pause.png) no-repeat;
 }
 
 #next {
-    background: url(../assets/next.png) no-repeat;
+    background: url(../img/next.png) no-repeat;
 }
 
 #prev {
-    background: url(../assets/prev.png) no-repeat;
+    background: url(../img/prev.png) no-repeat;
 }
 
 #repeat {
-    background: url(../assets/repeat.png) no-repeat;
+    background: url(../img/repeat.png) no-repeat;
 }
 
 #repeat.on {
-    background: url(../assets/repeati.png) no-repeat;
+    background: url(../img/repeati.png) no-repeat;
 }
 
 #sound {
-    background: url(../assets/sound.png) no-repeat;
+    background: url(../img/sound.png) no-repeat;
 }
 
 #love {
-    background: url(../assets/love.png) no-repeat;
+    background: url(../img/love.png) no-repeat;
 }
 
 #love.on {
-    background: url(../assets/lovei.png) no-repeat;
+    background: url(../img/lovei.png) no-repeat;
 }
 
 #trash {
-    background: url(../assets/trash.png) no-repeat;
+    background: url(../img/trash.png) no-repeat;
 }
 
 input[type=range] {
@@ -222,7 +226,7 @@ input[type=range]::-webkit-slider-thumb {
     height: 36px;
     width: 18px;
     display: block;
-    background: url(../assets/arrow.png) 100% 0 no-repeat;
+    background: url(../img/arrow.png) 100% 0 no-repeat;
     display: none;
 }
 
@@ -234,7 +238,7 @@ input[type=range]::-webkit-slider-thumb {
 
 
 #loading {
-    background: url(../assets/loading.gif) 125px 125px no-repeat;
+    background: url(../img/loading.gif) 125px 125px no-repeat;
     width: 100%;
     height: 100%;
     position: absolute;
@@ -318,7 +322,7 @@ input[type=range]::-webkit-slider-thumb {
     left: 2px;
     width: 16px;
     height: 16px;
-    background-image: url(../assets/popup.png);
+    background-image: url(../img/popup.png);
     display: none;
 }
 

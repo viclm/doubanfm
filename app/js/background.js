@@ -114,9 +114,9 @@ dfm.Player = Backbone.View.extend({
                 }
                 else {
                     chrome.windows.create({
-                        width: 300,
+                        width: 275,
                         height: 275,
-                        url: '../pages/popup.html',
+                        url: '../partials/popup.html',
                         type: 'popup'
                     });
                 }
@@ -155,13 +155,13 @@ dfm.Player = Backbone.View.extend({
                     case 'switch':
                         this.isPlay = msg.isPlay;
                         if (msg.isPlay) {
-                            chrome.browserAction.setIcon({path: '../assets/icon_small.png'});
+                            chrome.browserAction.setIcon({path: '../img/icon_small.png'});
                             if (this.playList.length) {
                                 this.el.play();
                             }
                         }
                         else {
-                            chrome.browserAction.setIcon({path: '../assets/icon_small_pause.png'});
+                            chrome.browserAction.setIcon({path: '../img/icon_small_pause.png'});
                             this.el.pause();
                         }
                         break;
@@ -253,7 +253,7 @@ dfm.Player = Backbone.View.extend({
                                     if (this.isPlay) {
                                         this.el.volume = Number(localStorage.volume) / 100;
                                         this.el.play();
-                                        chrome.browserAction.setIcon({path: '../assets/icon_small.png'});
+                                        chrome.browserAction.setIcon({path: '../img/icon_small.png'});
                                     }
                                     port.postMessage(this.getCurrentSongInfo());
                                 }

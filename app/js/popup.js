@@ -1,3 +1,115 @@
+angular.module('player', []).
+  filter('strftime', function () {
+    return function(seconds) {
+        var minutes = Math.floor(seconds / 60), seconds = seconds % 60, str;
+        str = (minutes > 9 ? minutes : '0' + minutes) + ':' + (seconds > 9 ? seconds : '0' + seconds);
+        return str;
+    }
+  }).
+  filter('b2s', function () {
+    return function (bool, str, str2) {
+        return bool ? str : str2 || '';
+    }
+  }).
+  directive('blink', function ($timeout) {
+    return function (scope, element, attrs) {
+        scope.$watch(attrs.blink, function (value) {
+            element.css('opacity', '1');
+            $timeout(function () {
+                element.css('opacity', '0');
+            }, 3000);
+        }, true);
+    }
+  });
+
+function Player($scope, $timeout) {
+
+    $scope.song = {
+        title: '正在获取歌曲，请稍候'
+    };
+
+    $scope.channel = {
+        list: channelList,
+        current: localStorage.channel,
+        setSelected: function (c) {
+            return c.channel_id == this.current;
+        }
+    };
+
+    $scope.playlist = {
+        setActive: function (index) {
+            return index === this.current ? 'active' : '';
+        }
+    };
+
+    $scope.message = '';
+
+    var port = chrome.extension.connect({name: 'fm'});
+    port.postMessage({cmd: 'get'});
+    port.onMessage.addListener(function (msg) {
+        $timeout(function (){});
+        switch (msg.cmd) {
+            case 'progress':
+                if (msg.length) {
+                    $scope.song.time = msg.time;
+                    $scope.song.progress = msg.time / msg.length * 100;
+                    if (msg.lrc) {
+                        $scope.message = msg.lrc;
+                    }
+                }
+                break;
+            case 'set':console.log(msg)
+                $scope.song = msg;
+                $scope.song.progress = msg.length ? msg.time / msg.length * 100 : 0;
+                $scope.song.source = msg.artist + ' | ' + msg.albumtitle;
+                $scope.song.like = msg.like ? 'on' : '';
+                $scope.song.repeat = msg.isRepeat ? 'on' : '';
+                $scope.song.volume = msg.volume * 100;
+                if (!msg.canplaythrough){
+                    $scope.message = '载入中...';
+                }
+                $scope.channel.current = localStorage.channel;
+                $scope.playlist.list = msg.list;
+                $scope.playlist.current = Number(msg.current);
+                return;
+                this.isPlay = msg.isPlay;
+                break;
+            case 'canplaythrough':
+                //this.onCanplaythrough(msg);
+                break;
+            case 'error':
+                //this.message.text(msg.msg);
+                break;
+            case 'oauth':
+                //this.onOauth(msg);
+                break;
+        }
+    });
+
+    $scope.switch = function () {
+        $scope.song.isPlay = !$scope.song.isPlay;
+        port.postMessage({cmd: 'switch', isPlay: $scope.song.isPlay});
+    };
+
+}
+    listUpdate= function(playList, current) {
+        var i = 0,
+        len = playList.length,
+        p,
+        trueList = this.list.find('section');
+        trueList.empty();
+        for (; i < len ; i += 1) {
+            p = document.createElement('p');
+            p.dataset.index = i;
+            if (current === i) {p.className = 'active';}
+            p.innerHTML = playList[i].title + ' - ' + playList[i].artist;
+            trueList.append(p);
+        }
+        var offset = (current+1) * p.offsetHeight - window.innerHeight / 2;
+        if (offset < 0) {offset = 0;}
+        trueList.css('top', -offset+'px');
+    }
+
 var dfm = {};
 
 dfm.Winswitcher = function (args) {
@@ -92,6 +204,9 @@ dfm.Winswitcher.prototype.setNav = function () {
     }
 }
 
+new dfm.Winswitcher();
+/*
+
 dfm.Player = Backbone.View.extend({
 
     el: 'body',
@@ -99,34 +214,6 @@ dfm.Player = Backbone.View.extend({
     isPlay: false,
 
     initialize: function () {
-
-        this.player = $('#player');
-        this.list = $('#list');
-        this.progress = this.player.find('header progress');
-        this.title = this.player.find('header h1');
-        this.artist = this.player.find('header p');
-        this.doubanlink = this.player.find('section a');
-        this.message = this.player.find('section p')
-        this.channel = this.player.find('select');
-        this.play = $('#play');
-        this.prev = $('#prev');
-        this.next = $('#next');
-        this.love = $('#love');
-        this.trash = $('#trash');
-        this.sound = $('#sound');
-        this.repeat = $('#repeat');
-        this.soundCtr = this.player.find('footer input[type=range]');
-        this.oauth = $('#oauth');
-
-        for (var i = 0, len = channelList.length, p ; i < len ; i += 1) {
-            p = $('<option>');
-            p.attr('value', channelList[i].channel_id);
-            p.html(channelList[i].name);
-            this.channel.append(p);
-        }
-        this.channel.val(localStorage.channel);
-
-        this.winswitcher = new dfm.Winswitcher();
 
         this.port = chrome.extension.connect({name: 'fm'});
         this.port.postMessage({cmd: 'get'});
@@ -155,49 +242,13 @@ dfm.Player = Backbone.View.extend({
     },
 
     render: function (msg) {
-        this.player.css('backgroundImage', 'url('+ msg.picture +')');
-        this.list.css('backgroundImage', 'url('+ msg.picture +')');
-        this.progress.val(msg.length ? msg.time / msg.length * 100 : 0);
-        this.progress.attr('title', this.strftime(msg.time));
-        this.title.html(msg.title);
-        this.artist.html(msg.artist + ' | ' + msg.albumtitle);
-        this.doubanlink.attr('href', msg.album);
-        this.soundCtr.val(msg.volume * 100);
-        if (msg.like) {
-            this.love.addClass('on');
-        }
-        else {
-            this.love.removeClass('on');
-        }
-        if (msg.isRepeat) {
-            this.repeat.addClass('on');
-        }
-        else {
-            this.repeat.removeClass('on');
-        }
-        if (msg.isPlay) {
-            this.play.css('backgroundImage', 'url(../assets/pause.png)');
-        }
-        else {
-            this.play.css('backgroundImage', 'url(../assets/play.png)');
-        }
-        this.isPlay = msg.isPlay;
-        if (!msg.canplaythrough){
-            this.message.text('载入中...');
-        }
-        this.channel.val(localStorage.channel);
-        this.channel.css('opacity', 1);
-        setTimeout(function () {
-            this.channel.css('opacity', 0);
-        }.bind(this), 3000);
-        this.listUpdate(msg.list, Number(msg.current));
     },
 
     events: {
         'mouseover': 'onhover',
         'mouseout': 'onhover',
         'keyup': 'hotkey',
-        'contextmenu #player': 'switch',
+        //'contextmenu #player': 'switch',
         'click #player': 'openAlbum',
         'click progress': 'fastForward',
         'click #play': 'switch',
@@ -227,14 +278,7 @@ dfm.Player = Backbone.View.extend({
         $('body').width(window.innerWidth).height(window.innerHeight);
     },
 
-    onProgress: function (msg) {
-        if (msg.length) {
-            this.progress.val(msg.time / msg.length * 100);
-            if (msg.lrc) {
-                this.message.text(msg.lrc);
-            }
-        }
-    },
+
 
     onCanplaythrough: function (msg) {
         this.progress.val(0);
@@ -359,18 +403,7 @@ dfm.Player = Backbone.View.extend({
         this.port.postMessage({cmd: 'skip', rate: e.offsetX/275});
     },
 
-    switch: function (e) {
-        var self = this;
-        this.isPlay = !this.isPlay;
-        if (this.isPlay) {
-            this.play.css('backgroundImage', 'url(../assets/pause.png)');
-        }
-        else {
-            this.play.css('backgroundImage', 'url(../assets/play.png)');
-        }
-        this.port.postMessage({cmd: 'switch', isPlay: self.isPlay});
-        e.preventDefault();
-    },
+
 
     onPrev: function (e) {
         this.port.postMessage({cmd: 'prev'});
@@ -468,30 +501,11 @@ dfm.Player = Backbone.View.extend({
         trueList.style.top = top + 'px'
     },
 
-    listUpdate: function(playList, current) {
-        var i = 0,
-        len = playList.length,
-        p,
-        trueList = this.list.find('section');
-        trueList.empty();
-        for (; i < len ; i += 1) {
-            p = document.createElement('p');
-            p.dataset.index = i;
-            if (current === i) {p.className = 'active';}
-            p.innerHTML = playList[i].title + ' - ' + playList[i].artist;
-            trueList.append(p);
-        }
-        var offset = (current+1) * p.offsetHeight - window.innerHeight / 2;
-        if (offset < 0) {offset = 0;}
-        trueList.css('top', -offset+'px');
-    },
 
-    strftime: function (seconds) {
-        var minutes = Math.floor(seconds / 60), seconds = seconds % 60, str;
-        str = (minutes > 9 ? minutes : '0' + minutes) + ':' + (seconds > 9 ? seconds : '0' + seconds);
-        return str;
-    }
 
-});
 
-new dfm.Player;
+});*/
+
+//new dfm.Player;
+
+
