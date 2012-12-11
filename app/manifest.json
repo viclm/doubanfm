@@ -16,7 +16,7 @@
     },
 
     "background": {
-        "scripts": ["js/zepto.min.js", "js/underscore-min.js", "js/backbone-min.js", "js/background.js"]
+        "scripts": ["js/sha1.js", "js/oauth.js", "js/oauthsimple.js", "js/zepto.min.js", "js/underscore-min.js", "js/backbone-min.js", "js/background.js"]
     },
 
     "options_page": "partials/options.html",
@@ -28,6 +28,7 @@
         "cookies",
         "http://douban.fm/*",
         "http://douban.com/",
+        "http://www.douban.com/",
         "http://ting.baidu.com/*",
         "http://openapi.baidu.com/*"
     ]

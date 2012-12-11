@@ -5,41 +5,40 @@
         <title>豆瓣FM 精美版</title>
         <link rel="stylesheet" href="../css/popup.css" />
     </head>
-    <body ng-controller="Player">
+    <body ng-controller="Player" keyup="hotkey($event)" ng-mouseover="hover($event)" ng-mouseout="hover($event)">
         <div>
-            <div id="player" ng-style="{'background': 'url('+ song.picture+') no-repeat'}">
+            <div id="player" ng-style="{'background-image': 'url('+ picture+')'}" ng-click="openAlbum($event)" contextmenu="action('play', $event)">
                 <header>
-                    <progress title="{{song.time | strftime}}" value="{{song.progress}}" min="0" max="100"></progress>
-                    <p>{{song.source}}</p>
-                    <h1>{{song.title}}</h1>
+                    <progress title="{{time | strftime}}" value="{{progress}}" min="0" max="100" ng-click="action('skip', $event)"></progress>
+                    <p>{{source}}</p>
+                    <h1>{{title}}</h1>
                 </header>
                 <section>
-                    <a href="{{song.album}}"></a>
                     <p>{{message}}</p>
-                    <select blink="channel">
+                    <select blink="channel" ng-change="action('channel')" ng-model="channel.current">
                         <option ng-repeat="c in channel.list" value="{{c.channel_id}}" ng-selected="channel.setSelected(c)">{{c.name}}</option>
                     </select>
                 </section>
                 <footer>
                     <div class="left">
-                        <a id="love" class="{{song.like}}">love</a>
-                        <a id="trash">trash</a>
+                        <a id="like" ng-click="action('like')" class="{{isLike | b2s:'on'}}">like</a>
+                        <a id="trash" ng-click="action('trash')">trash</a>
                     </div>
                     <div class="middle">
-                        <a id="prev">prev</a>
-                        <a id="play" class="{{song.isPlay | b2s:'pause'}}" ng-click="switch()">play</a>
-                        <a id="next">next</a>
+                        <a id="prev" ng-click="action('prev')">prev</a>
+                        <a id="play" ng-click="action('play')" class="{{isPlay | b2s:'pause'}}">play</a>
+                        <a id="next" ng-click="action('next')">next</a>
                     </div>
                     <div class="right">
-                        <a id="sound">sound</a>
-                        <a id="repeat" class="{{song.repeat}}">loop</a>
+                        <a id="sound" ng-click="soundCtr=!soundCtr">sound</a>
+                        <a id="repeat" ng-click="action('repeat')" class="{{isRepeat | b2s:'on'}}">loop</a>
                     </div>
-                    <input type="range" value="{{song.volume}}" />
+                    <input type="range" ng-show="soundCtr" ng-change="action('volume')" ng-model="volume" />
                 </footer>
             </div>
-            <div id="list" ng-style="{'background': 'url('+song.picture+') no-repeat'}">
-                <section>
-                    <p ng-repeat="p in playlist.list" data-index="{{$index}}" class="{{playlist.setActive($index)}}">{{p.title}} - {{p.artist}}</p>
+            <div id="list" ng-style="{'background-image': 'url('+picture+')'}">
+                <section mousewheel="onmousewheel($event)">
+                    <p ng-repeat="p in playlist.list" data-index="{{$index}}" class="{{playlist.setActive($index)}}" ng-click="action('index', $event)">{{p.title}} - {{p.artist}}</p>
                 </section>
             </div>
         </div>
@@ -50,9 +49,7 @@
 
         <script src="../lib/angular/angular.js"></script>
         <script src="../js/channel.js" charset="utf-8" ></script>
-        <script src="../js/underscore-min.js"></script>
         <script src="../js/zepto.min.js"></script>
-        <script src="../js/backbone-min.js"></script>
         <script src="../js/oop.js"></script>
         <script src="../js/base64.js"></script>
         <script src="../js/slideshow.js"></script>

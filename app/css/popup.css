@@ -143,11 +143,11 @@ footer > div {
     background: url(../img/sound.png) no-repeat;
 }
 
-#love {
+#like {
     background: url(../img/love.png) no-repeat;
 }
 
-#love.on {
+#like.on {
     background: url(../img/lovei.png) no-repeat;
 }
 
@@ -163,7 +163,6 @@ input[type=range] {
     left: 154px;
     bottom: 36px;
     background-color: white;
-    display: none;
 }
 
 input[type=range]::-webkit-slider-thumb {

@@ -152,9 +152,9 @@ dfm.Player = Backbone.View.extend({
                     case 'skip':
                         this.el.currentTime = this.el.duration * msg.rate;
                         break;
-                    case 'switch':
-                        this.isPlay = msg.isPlay;
-                        if (msg.isPlay) {
+                    case 'play':
+                        this.isPlay = msg.value;
+                        if (msg.value) {
                             chrome.browserAction.setIcon({path: '../img/icon_small.png'});
                             if (this.playList.length) {
                                 this.el.play();
@@ -202,11 +202,11 @@ dfm.Player = Backbone.View.extend({
                         localStorage.volume = msg.value;
                         break;
                     case 'repeat':
-                        this.isRepeat = msg.status;
+                        this.isRepeat = msg.value;
                         break;
-                    case 'love':
+                    case 'like':
                         var type, song = this.playList.at(this.current);
-                        if (msg.status) {
+                        if (msg.value) {
                             type = 'r';
                             song.set({like: 1});
                         }
@@ -261,6 +261,7 @@ dfm.Player = Backbone.View.extend({
                         }
                         break;
                     case 'channel':
+                        localStorage.channel = msg.value;
                         this.playList.remove(this.playList.models.slice(this.current + 1));
                         this.fetchSongs('n', function (loginNeeded) {
                             var self = this;
@@ -518,4 +519,4 @@ dfm.Player = Backbone.View.extend({
 
 });
 
-var p = new dfm.Player();
+new dfm.Player;
