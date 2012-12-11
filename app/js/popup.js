@@ -1,3 +1,13 @@
+
+    var onresize = function () {
+        angular.element(document.body).css({
+            width: window.innerWidth + 'px',
+            height: window.innerHeight + 'px'
+        });
+    }
+    onresize();
+    angular.element(window).bind('resize', onresize);
+
 var player = angular.module('player', []).
   filter('strftime', function () {
     return function(seconds) {
@@ -35,9 +45,112 @@ var player = angular.module('player', []).
     }]);
 });
 
+player.directive('login', ['$http', function ($http) {
+    return function (scope, element, attrs) {
+
+        function post(e) {
+            e.preventDefault();
+            var form = element.find('form'), mask = angular.element('<div class="mask">登陆中...</div>');
+            form.find('p').html('');
+            element.append(mask);
+            $http({
+                method: form.attr('type'),
+                url: form.attr('action'),
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                data: 'source=radio&remember=on'
+                    +'&alias='+form[0].querySelector('[name=alias]').value
+                    +'&form_password='+form[0].querySelector('[name=form_password]').value
+                    +'&captcha_id='+form[0].querySelector('[name=captcha_id]').value
+                    +'&captcha_solution='+form[0].querySelector('[name=captcha_solution]').value
+            }).success(function (data) {
+                    if (data.r === 1) {
+                        if (data.err_no === 1011) {
+                            $http({method: 'GET', url: 'http://douban.fm/j/new_captcha'}).
+                                success(function (data, status, headers, config) {
+                                    data = data.slice(1,-1);
+                                    form.find('input').eq(0).val(data);
+                                    form.find('img').attr('src', 'http://douban.fm/misc/captcha?size=m&id=' + data);
+                                })
+                        }
+                        form.find('p').html(data.err_msg);
+                    }
+                    else if (data.r === 0) {
+                        chrome.cookies.get({
+                            url: 'http://douban.fm',
+                            name: 'dbcl2'
+                        }, function (c) {
+                            chrome.cookies.set({
+                                url: 'http://douban.com',
+                                name: 'dbcl2',
+                                value: c.value,
+                                domain: '.douban.com',
+                                path: '/',
+                                secure: c.secure,
+                                httpOnly: c.httpOnly,
+                                expirationDate: c.expirationDate,
+                                storeId: c.storeId
+                            });
+                        });
+                        localStorage.username = base64.encode(form[0].querySelector('[name=alias]').value);
+                        localStorage.password = base64.encode(form[0].querySelector('[name=form_password]').value);
+                        scope.loginNeeded = false;
+                        element.css('top', '100%');
+                        scope.action('channel');
+                    }
+                    mask.remove();
+                });
+        }
+
+        function cancel(e) {
+            scope.channel.current = 1;
+            element.css('top', '100%');
+            scope.action('channel');
+            e.preventDefault();
+        }
+
+        scope.$watch(attrs.login, function (value) {
+            if (value) {
+                var form = ('<form type="post" action="http://douban.fm/j/login">\
+                        <h2>登陆</h2>\
+                        <input type="hidden" name="captcha_id" />\
+                        <input type="hidden" name="souce" value="radio" />\
+                        <input type="hidden" name="remember" value="on" />\
+                        <input type="text" name="alias" placeholder="用户名" required />\
+                        <input type="password" name="form_password" placeholder="密码" required />\
+                        <input type="text" name="captcha_solution" placeholder="验证码" required />\
+                        <img src="" alt="" />\
+                        <input type="submit" value="登陆" />\
+                        <a href="#">取消</a>\
+                        <p></p>\
+                    </form>');
+                element.html(form);
+                if (localStorage.username) {
+                    element.find('input').eq(2).val(base64.decode(localStorage.username));
+                }
+                if (localStorage.password) {
+                    element.find('[name=form_password]').val(base64.decode(localStorage.password));
+                }
+                var image = new Image();
+                image.onerror = function () {
+                    $http({method: 'GET', url: 'http://douban.fm/j/new_captcha'}).
+                        success(function (data, status, headers, config) {
+                            data = data.slice(1,-1);
+                            element.find('input').eq(0).val(data);
+                            element.find('img').attr('src', 'http://douban.fm/misc/captcha?size=m&id=' + data);
+                        });
+                }
+                image.src = 'http://douban.fm/j/new_captcha';
+                element.find('form').bind('submit', post);
+                element.find('a').bind('click', cancel);
+                element.css({display: 'block', top: '0'});
+            }
+        });
+    };
+}]);
+
 function Player($scope, $timeout) {
 
-    var port = chrome.extension.connect({name: 'fm'});
+    var port = $scope.port = chrome.extension.connect({name: 'fm'});
     port.postMessage({cmd: 'get'});
     port.onMessage.addListener(function (msg) {
         $timeout(function (){});
@@ -82,10 +195,12 @@ function Player($scope, $timeout) {
             $scope.message = msg.msg;
             break;
         case 'oauth':
-            //this.onOauth(msg);
+            $scope.loginNeeded = true;
             break;
         }
     });
+
+    $scope.loginNeeded = false;
 
     $scope.album = '';
     $scope.isLike = false;
@@ -115,7 +230,7 @@ function Player($scope, $timeout) {
         }
     };
 
-    $scope.hover = function (e) {
+    $scope.onhover = function (e) {
         var target = document.body, r = e.relatedTarget;
         while (r && r !== target) {r = r.parentNode;}
         if (r !== target) {
@@ -273,8 +388,6 @@ var Winswitcher = function (args) {
     this.setNav();
     this.btnPrev.style.display = 'none';
     this.btnNext.style.display = 'none';
-
-    this.moveTo(2)
 }
 
 extend(Winswitcher, Slideshow);

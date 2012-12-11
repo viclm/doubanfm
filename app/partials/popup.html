@@ -7,7 +7,7 @@
     </head>
     <body ng-controller="Player" keyup="hotkey($event)" ng-mouseover="hover($event)" ng-mouseout="hover($event)">
         <div>
-            <div id="player" ng-style="{'background-image': 'url('+ picture+')'}" ng-click="openAlbum($event)" contextmenu="action('play', $event)">
+            <div id="player" ng-style="{'background-image': 'url('+ picture+')'}" ng-click="openAlbum($event)" ontextmenu="action('play', $event)">
                 <header>
                     <progress title="{{time | strftime}}" value="{{progress}}" min="0" max="100" ng-click="action('skip', $event)"></progress>
                     <p>{{source}}</p>
@@ -42,7 +42,7 @@
                 </section>
             </div>
         </div>
-        <div id="oauth"></div>
+        <div id="oauth" login="loginNeeded"></div>
 
         <a id="left">left</a>
         <a id="right">right</a>
