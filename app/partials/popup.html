@@ -15,9 +15,7 @@
                 </header>
                 <section>
                     <p>{{message}}</p>
-                    <select blink="channel" ng-change="action('channel')" ng-model="channel.current">
-                        <option ng-repeat="c in channel.list" value="{{c.channel_id}}" ng-selected="channel.setSelected(c)">{{c.name}}</option>
-                    </select>
+                    <select blink="channel" ng-change="action('channel')" ng-model="channel" ng-options="channel as value for (key, value) in channelList"></select>
                 </section>
                 <footer>
                     <div class="left">
@@ -42,6 +40,7 @@
                 </section>
             </div>
         </div>
+
         <div id="oauth" login="loginNeeded"></div>
 
         <a id="left">left</a>
@@ -50,7 +49,7 @@
         <script src="../lib/angular/angular.js"></script>
         <script src="../js/channel.js" charset="utf-8" ></script>
         <script src="../js/zepto.min.js"></script>
-        <script src="../js/oop.js"></script>
+        <script src="../js/rjs.js"></script>
         <script src="../js/base64.js"></script>
         <script src="../js/slideshow.js"></script>
         <script src="../js/popup.js" charset="utf-8" ></script>

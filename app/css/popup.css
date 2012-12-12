@@ -226,7 +226,6 @@ input[type=range]::-webkit-slider-thumb {
     width: 18px;
     display: block;
     background: url(../img/arrow.png) 100% 0 no-repeat;
-    display: none;
 }
 
 #right {

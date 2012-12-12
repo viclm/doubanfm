@@ -1,12 +1,104 @@
+var jQuery = Zepto;
 
-    var onresize = function () {
-        angular.element(document.body).css({
-            width: window.innerWidth + 'px',
-            height: window.innerHeight + 'px'
-        });
-    }
-    onresize();
-    angular.element(window).bind('resize', onresize);
+rjs.use(['slideshow'], function (slideshow) {
+    var ViewChange = rjs.Class(slideshow.Base, {
+        init: function (opt) {
+            this.$super(opt);
+
+            this.slide = document.querySelector('body > div');
+            this.btnPrev = left;
+            this.btnNext = right;
+            this.count = 1;
+            this.length = 2;
+
+            var self = this;
+
+            var hover = false;
+
+            this.btnPrev.addEventListener('mouseover', function (e) {
+                hover = true;
+                setTimeout(function () {
+                    if (hover) {self.prev();}
+                }, 500);
+            }, false);
+
+            this.btnPrev.addEventListener('mouseout', function (e) {
+                hover = false;
+            }, false);
+
+            this.btnNext.addEventListener('mouseover', function (e) {
+                hover = true;
+                setTimeout(function () {
+                    if (hover) {self.next();}
+                }, 500);
+            }, false);
+
+            this.btnNext.addEventListener('mouseout', function (e) {
+                hover = false;
+            }, false);
+
+            document.body.addEventListener('mouseover', function () {
+                if (self.btnPrev.dataset.visible === 'hidden') {
+                    self.btnPrev.style.display = 'none';
+                }
+                else {
+                    self.btnPrev.style.display = 'block';
+                }
+
+                if (self.btnNext.dataset.visible === 'hidden') {
+                    self.btnNext.style.display = 'none';
+                }
+                else {
+                    self.btnNext.style.display = 'block';
+                }
+            }, false);
+
+            document.body.addEventListener('mouseout', function () {
+                self.btnPrev.style.display = 'none';
+                self.btnNext.style.display = 'none';
+            }, false);
+
+            this.setNav();
+            this.btnPrev.style.display = 'none';
+            this.btnNext.style.display = 'none';
+        },
+        moveTo: function (index) {
+            var res = this.$super(index);
+            if (res > -1) {
+                this.slide.style.left = -(res-1)*100+'%';
+                this.setNav();
+            }
+        },
+        setNav: function () {
+            if (this.count === 1) {
+                this.btnPrev.style.display = 'none';
+                this.btnPrev.dataset.visible = 'hidden';
+            }
+            else {
+                this.btnPrev.style.display = 'block';
+                this.btnPrev.dataset.visible = 'show';
+            }
+
+            if (this.count === this.length) {
+                this.btnNext.style.display = 'none';
+                this.btnNext.dataset.visible = 'hidden';
+            }
+            else {
+                this.btnNext.style.display = 'block';
+                this.btnNext.dataset.visible = 'show';
+            }
+        }
+    });
+
+    new ViewChange();
+});
+
+$(window).on('resize', function () {
+    $(document.body).css({
+        width: window.innerWidth + 'px',
+        height: window.innerHeight + 'px'
+    });
+});
 
 var player = angular.module('player', []).
   filter('strftime', function () {
@@ -150,7 +242,7 @@ player.directive('login', ['$http', function ($http) {
 
 function Player($scope, $timeout) {
 
-    var port = $scope.port = chrome.extension.connect({name: 'fm'});
+    var port = chrome.extension.connect({name: 'fm'});
     port.postMessage({cmd: 'get'});
     port.onMessage.addListener(function (msg) {
         $timeout(function (){});
@@ -178,7 +270,7 @@ function Player($scope, $timeout) {
             if (!msg.canplaythrough) {
                 $scope.message = '载入中...';
             }
-            $scope.channel.current = localStorage.channel;
+            $scope.channel = localStorage.channel;
             $scope.playlist.list = msg.list;
             $scope.playlist.current = Number(msg.current);
             break;
@@ -216,13 +308,16 @@ function Player($scope, $timeout) {
 
     $scope.message = '';
 
-    $scope.channel = {
+    /*$scope.channel = {
         list: channelList,
         current: localStorage.channel,
         setSelected: function (c) {
             return c.channel_id == this.current;
         }
-    };
+    };*/
+
+    $scope.channel = localStorage.channel;
+    $scope.channelList = channelList;
 
     $scope.playlist = {
         setActive: function (index) {
@@ -328,96 +423,4 @@ function Player($scope, $timeout) {
         trueList.css('top', -offset+'px');
     }
 
-var Winswitcher = function (args) {
 
-    this.superclass.constructor.call(this, args);
-
-    this.slide = document.querySelector('body > div');
-    this.btnPrev = left;
-    this.btnNext = right;
-    this.count = 1;
-    this.length = 2;
-
-    var self = this;
-
-    var hover = false;
-
-    this.btnPrev.addEventListener('mouseover', function (e) {
-        hover = true;
-        setTimeout(function () {
-            if (hover) {self.prev();}
-        }, 500);
-    }, false);
-
-    this.btnPrev.addEventListener('mouseout', function (e) {
-        hover = false;
-    }, false);
-
-    this.btnNext.addEventListener('mouseover', function (e) {
-        hover = true;
-        setTimeout(function () {
-            if (hover) {self.next();}
-        }, 500);
-    }, false);
-
-    this.btnNext.addEventListener('mouseout', function (e) {
-        hover = false;
-    }, false);
-
-    document.body.addEventListener('mouseover', function () {
-        if (self.btnPrev.dataset.visible === 'hidden') {
-            self.btnPrev.style.display = 'none';
-        }
-        else {
-            self.btnPrev.style.display = 'block';
-        }
-
-        if (self.btnNext.dataset.visible === 'hidden') {
-            self.btnNext.style.display = 'none';
-        }
-        else {
-            self.btnNext.style.display = 'block';
-        }
-    }, false);
-
-    document.body.addEventListener('mouseout', function () {
-        self.btnPrev.style.display = 'none';
-        self.btnNext.style.display = 'none';
-    }, false);
-
-    this.setNav();
-    this.btnPrev.style.display = 'none';
-    this.btnNext.style.display = 'none';
-}
-
-extend(Winswitcher, Slideshow);
-
-Winswitcher.prototype.moveTo = function (index) {
-    var res = this.superclass.moveTo.call(this, index);
-    if (res > -1) {
-        this.slide.style.left = -(res-1)*100+'%';
-        this.setNav();
-    }
-};
-
-Winswitcher.prototype.setNav = function () {
-    if (this.count === 1) {
-        this.btnPrev.style.display = 'none';
-        this.btnPrev.dataset.visible = 'hidden';
-    }
-    else {
-        this.btnPrev.style.display = 'block';
-        this.btnPrev.dataset.visible = 'show';
-    }
-
-    if (this.count === this.length) {
-        this.btnNext.style.display = 'none';
-        this.btnNext.dataset.visible = 'hidden';
-    }
-    else {
-        this.btnNext.style.display = 'block';
-        this.btnNext.dataset.visible = 'show';
-    }
-}
-
-new Winswitcher();

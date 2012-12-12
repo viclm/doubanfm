@@ -26,8 +26,9 @@
         "tabs",
         "notifications",
         "cookies",
-        "http://douban.fm/*",
+        "http://douban.fm/",
         "http://douban.com/",
+        "http://www.douban.com/",
         "http://ting.baidu.com/*",
         "http://openapi.baidu.com/*"
     ]

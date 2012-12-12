@@ -261,6 +261,7 @@ dfm.Player = Backbone.View.extend({
                         }
                         break;
                     case 'channel':
+                        localStorage.channel = msg.value;
                         this.playList.remove(this.playList.models.slice(this.current + 1));
                         this.fetchSongs('n', function (loginNeeded) {
                             var self = this;
@@ -274,7 +275,6 @@ dfm.Player = Backbone.View.extend({
                                     this.el.volume = Number(localStorage.volume) / 100;
                                     this.el.play();
                                 }
-                                localStorage.channel = msg.value;
                                 port.postMessage(this.getCurrentSongInfo());
                             }
                         }.bind(this));
@@ -299,7 +299,7 @@ dfm.Player = Backbone.View.extend({
         return {
             show: function () {
                 notify = localStorage.notifyStyle === '1' ? window.webkitNotifications.createNotification(
-        self.playList.at(self.current).get('picture'), self.playList.at(self.current).get('title'), self.playList.at(self.current).get('artist')) : webkitNotifications.createHTMLNotification('../pages/popup.html');
+        self.playList.at(self.current).get('picture'), self.playList.at(self.current).get('title'), self.playList.at(self.current).get('artist')) : webkitNotifications.createHTMLNotification('../partials/popup.html');
                 notify.show();
                 visible = true;
                 this.timer();
