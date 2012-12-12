@@ -1,119 +1,77 @@
 var jQuery = Zepto;
 
-rjs.use(['slideshow'], function (slideshow) {
-    var ViewChange = rjs.Class(slideshow.Base, {
-        init: function (opt) {
-            this.$super(opt);
+var View = rjs.Class({
+    init: function (opt) {
+        this.slide = $('#tracker');
+        this.btnPrev = $('#left');
+        this.btnNext = $('#right');
+        this.loop = true;
+        this.length = 2;
 
-            this.slide = document.querySelector('body > div');
-            this.btnPrev = left;
-            this.btnNext = right;
-            this.count = 1;
-            this.length = 2;
+        var self = this, hover = false;
 
-            var self = this;
+        this.btnPrev.on('mouseover', function (e) {
+            hover = true;
+            setTimeout(function () {
+                if (hover) {self.prev();}
+            }, 500);
+        });
 
-            var hover = false;
+        this.btnPrev.on('mouseout', function (e) {
+            hover = false;
+        }, false);
 
-            this.btnPrev.addEventListener('mouseover', function (e) {
-                hover = true;
-                setTimeout(function () {
-                    if (hover) {self.prev();}
-                }, 500);
-            }, false);
+        this.btnNext.on('mouseover', function (e) {
+            hover = true;
+            setTimeout(function () {
+                if (hover) {self.next();}
+            }, 500);
+        }, false);
 
-            this.btnPrev.addEventListener('mouseout', function (e) {
-                hover = false;
-            }, false);
+        this.btnNext.on('mouseout', function (e) {
+            hover = false;
+        }, false);
 
-            this.btnNext.addEventListener('mouseover', function (e) {
-                hover = true;
-                setTimeout(function () {
-                    if (hover) {self.next();}
-                }, 500);
-            }, false);
-
-            this.btnNext.addEventListener('mouseout', function (e) {
-                hover = false;
-            }, false);
-
-            document.body.addEventListener('mouseover', function () {
-                if (self.btnPrev.dataset.visible === 'hidden') {
-                    self.btnPrev.style.display = 'none';
-                }
-                else {
-                    self.btnPrev.style.display = 'block';
-                }
-
-                if (self.btnNext.dataset.visible === 'hidden') {
-                    self.btnNext.style.display = 'none';
-                }
-                else {
-                    self.btnNext.style.display = 'block';
-                }
-            }, false);
-
-            document.body.addEventListener('mouseout', function () {
-                self.btnPrev.style.display = 'none';
-                self.btnNext.style.display = 'none';
-            }, false);
-
-            this.setNav();
-            this.btnPrev.style.display = 'none';
-            this.btnNext.style.display = 'none';
-        },
-        moveTo: function (index) {
-            var res = this.$super(index);
-            if (res > -1) {
-                this.slide.style.left = -(res-1)*100+'%';
-                this.setNav();
-            }
-        },
-        setNav: function () {
-            if (this.count === 1) {
-                this.btnPrev.style.display = 'none';
-                this.btnPrev.dataset.visible = 'hidden';
-            }
-            else {
-                this.btnPrev.style.display = 'block';
-                this.btnPrev.dataset.visible = 'show';
-            }
-
-            if (this.count === this.length) {
-                this.btnNext.style.display = 'none';
-                this.btnNext.dataset.visible = 'hidden';
-            }
-            else {
-                this.btnNext.style.display = 'block';
-                this.btnNext.dataset.visible = 'show';
-            }
+    },
+    prev: function () {
+        if (this.slide.css('left') ===  '0px') {
+            this.slide.children().first().appendTo(this.slide);
+            this.slide.css('-webkit-transition', 'none');
+            this.slide.css('left', '-100%');
         }
-    });
-
-    new ViewChange();
+        this.slide.width();
+        this.slide.css('-webkit-transition', 'left .5s');
+        this.slide.css('left', 0);
+    },
+    next: function () {
+        if (this.slide.css('left') ===  '-100%') {
+            this.slide.children().first().appendTo(this.slide);
+            this.slide.css('-webkit-transition', 'none');
+            this.slide.css('left', '0');
+        }
+        this.slide.width();
+        this.slide.css('-webkit-transition', 'left .5s');
+        this.slide.css('left', '-100%');
+    }
 });
 
-$(window).on('resize', function () {
-    $(document.body).css({
-        width: window.innerWidth + 'px',
-        height: window.innerHeight + 'px'
-    });
-});
+var player = angular.module('player', []);
 
-var player = angular.module('player', []).
-  filter('strftime', function () {
+player.filter('strftime', function () {
     return function(seconds) {
         var minutes = Math.floor(seconds / 60), seconds = seconds % 60, str;
         str = (minutes > 9 ? minutes : '0' + minutes) + ':' + (seconds > 9 ? seconds : '0' + seconds);
         return str;
     }
-  }).
-  filter('b2s', function () {
+});
+
+player.filter('b2s', function () {
     return function (bool, str, str2) {
         return bool ? str : str2 || '';
     }
-  }).
-  directive('blink', ['$timeout', function ($timeout) {
+});
+
+player.directive('blink', ['$timeout', function ($timeout) {
     return function (scope, element, attrs) {
         scope.$watch(attrs.blink, function (value) {
             element.css('opacity', '1');
@@ -122,7 +80,7 @@ var player = angular.module('player', []).
             }, 3000);
         }, true);
     }
-  }]);
+}]);
 
 ['mousewheel', 'contextmenu', 'keyup'].forEach(function (directiveName) {
     player.directive(directiveName, ['$parse', function ($parse) {
@@ -194,7 +152,7 @@ player.directive('login', ['$http', function ($http) {
         }
 
         function cancel(e) {
-            scope.channel.current = 1;
+            scope.channel = 1;
             element.css('top', '100%');
             scope.action('channel');
             e.preventDefault();
@@ -240,8 +198,9 @@ player.directive('login', ['$http', function ($http) {
     };
 }]);
 
-function Player($scope, $timeout) {
+player.controller('Player', ['$scope', '$timeout', '$window', function ($scope, $timeout, $window) {
 
+    var win = new View();
     var port = chrome.extension.connect({name: 'fm'});
     port.postMessage({cmd: 'get'});
     port.onMessage.addListener(function (msg) {
@@ -271,8 +230,8 @@ function Player($scope, $timeout) {
                 $scope.message = '载入中...';
             }
             $scope.channel = localStorage.channel;
-            $scope.playlist.list = msg.list;
-            $scope.playlist.current = Number(msg.current);
+            $scope.playlist = msg.list;
+            $scope.current = Number(msg.current);
             break;
         case 'canplaythrough':
             $scope.progress = 0;
@@ -292,6 +251,15 @@ function Player($scope, $timeout) {
         }
     });
 
+    $(window).on('resize', function () {
+        $(document.body).css({
+            width: window.innerWidth + 'px',
+            height: window.innerHeight + 'px'
+        });
+    });
+
+    $scope.window = $window;
+
     $scope.loginNeeded = false;
 
     $scope.album = '';
@@ -308,40 +276,32 @@ function Player($scope, $timeout) {
 
     $scope.message = '';
 
-    /*$scope.channel = {
-        list: channelList,
-        current: localStorage.channel,
-        setSelected: function (c) {
-            return c.channel_id == this.current;
-        }
-    };*/
-
     $scope.channel = localStorage.channel;
     $scope.channelList = channelList;
 
-    $scope.playlist = {
-        setActive: function (index) {
-            return index === this.current ? 'active' : '';
-        }
-    };
+    $scope.playlist = [];
+    $scope.current = 0;
+
+    $scope.hover = false;
 
     $scope.onhover = function (e) {
         var target = document.body, r = e.relatedTarget;
         while (r && r !== target) {r = r.parentNode;}
         if (r !== target) {
             port.postMessage({cmd: 'event', type: e.type});
+            $scope.hover = e.type === 'mouseover';
         }
     };
 
     $scope.action = function (type, e) {
         switch (type) {
         case 'channel':
-            port.postMessage({cmd: type, value: $scope.channel.current});
+            port.postMessage({cmd: type, value: $scope.channel});
             break;
         case 'index':
             if (e.target.className !== 'active') {
                 port.postMessage({cmd: type, index: Number(e.target.dataset.index)});
-                //this.winswitcher.prev();
+                win.prev();
             }
             break;
         case 'like':
@@ -404,23 +364,4 @@ function Player($scope, $timeout) {
         trueList.style.top = top + 'px'
     };
 
-}
-    listUpdate= function(playList, current) {
-        var i = 0,
-        len = playList.length,
-        p,
-        trueList = this.list.find('section');
-        trueList.empty();
-        for (; i < len ; i += 1) {
-            p = document.createElement('p');
-            p.dataset.index = i;
-            if (current === i) {p.className = 'active';}
-            p.innerHTML = playList[i].title + ' - ' + playList[i].artist;
-            trueList.append(p);
-        }
-        var offset = (current+1) * p.offsetHeight - window.innerHeight / 2;
-        if (offset < 0) {offset = 0;}
-        trueList.css('top', -offset+'px');
-    }
-
-
+}]);

@@ -5,9 +5,9 @@
         <title>豆瓣FM 精美版</title>
         <link rel="stylesheet" href="../css/popup.css" />
     </head>
-    <body ng-controller="Player" keyup="hotkey($event)" ng-mouseover="hover($event)" ng-mouseout="hover($event)">
-        <div>
-            <div id="player" ng-style="{'background-image': 'url('+ picture+')'}" ng-click="openAlbum($event)" ontextmenu="action('play', $event)">
+    <body ng-controller="Player" keyup="hotkey($event)" ng-mouseover="onhover($event)" ng-mouseout="onhover($event)">
+        <div id="tracker">
+            <div id="player" ng-style="{'background-image': 'url('+picture+')'}" ng-click="openAlbum($event)" ontextmenu="action('play', $event)">
                 <header>
                     <progress title="{{time | strftime}}" value="{{progress}}" min="0" max="100" ng-click="action('skip', $event)"></progress>
                     <p>{{source}}</p>
@@ -15,7 +15,7 @@
                 </header>
                 <section>
                     <p>{{message}}</p>
-                    <select blink="channel" ng-change="action('channel')" ng-model="channel" ng-options="channel as value for (key, value) in channelList"></select>
+                    <select blink="channel" ng-show="hover" ng-change="action('channel')" ng-model="channel" ng-options="key as value for (key, value) in channelList"></select>
                 </section>
                 <footer>
                     <div class="left">
@@ -35,23 +35,22 @@
                 </footer>
             </div>
             <div id="list" ng-style="{'background-image': 'url('+picture+')'}">
-                <section mousewheel="onmousewheel($event)">
-                    <p ng-repeat="p in playlist.list" data-index="{{$index}}" class="{{playlist.setActive($index)}}" ng-click="action('index', $event)">{{p.title}} - {{p.artist}}</p>
+                <section mousewheel="onmousewheel($event)" ng-style="{top: -(current*25-((window.innerHeight-25)/2))+'px'}">
+                    <p ng-repeat="p in playlist" data-index="{{$index}}" class="{{$index == current | b2s:'active'}}" ng-click="action('index', $event)">{{p.title}} - {{p.artist}}</p>
                 </section>
             </div>
         </div>
 
         <div id="oauth" login="loginNeeded"></div>
 
-        <a id="left">left</a>
-        <a id="right">right</a>
+        <div id="left"></div>
+        <div id="right"></div>
 
         <script src="../lib/angular/angular.js"></script>
         <script src="../js/channel.js" charset="utf-8" ></script>
         <script src="../js/zepto.min.js"></script>
         <script src="../js/rjs.js"></script>
         <script src="../js/base64.js"></script>
-        <script src="../js/slideshow.js"></script>
         <script src="../js/popup.js" charset="utf-8" ></script>
     </body>
 </html>

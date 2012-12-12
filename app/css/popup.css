@@ -11,16 +11,15 @@ body {
     overflow: hidden;
 }
 
-body > div {
+#tracker {
     width: 200%;
     height: 100%;
     position: relative;
     overflow: hidden;
-    -webkit-transition: left .5s;
     left: 0;
 }
 
-body > div > div {
+#tracker > div {
     background-size: 100% 100%;
     background-image: none;
     background-color: #eee;
@@ -221,16 +220,14 @@ input[type=range]::-webkit-slider-thumb {
 #left, #right {
     z-index: 10;
     position: absolute;
-    top: 40%;
-    height: 36px;
-    width: 18px;
+    top: 15px;
+    height: 100%;
+    width: 10px;
     display: block;
-    background: url(../img/arrow.png) 100% 0 no-repeat;
 }
 
 #right {
     right: 0;
-    background-position: 0 0;
 }
 
 
