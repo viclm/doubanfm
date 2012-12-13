@@ -1,0 +1,28 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN" ng-csp ng-app="player">
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="../css/notify.css" />
+    </head>
+    <body ng-controller="Player" ng-mouseover="onhover($event)" ng-mouseout="onhover($event)" 1ontextmenu="action('play', $event)">
+        <img ng-src="{{picture}}" width="38" height="38" ng-click="openAlbum($event)" />
+        <section>
+            <div ng-hide="hover">
+                <h1>{{title}}</h1>
+                <p>{{source}}</p>
+            </div>
+            <div ng-show="hover">
+                <a id="prev" ng-click="action('prev')"></a>
+                <a id="play" ng-click="action('play')" class="{{isPlay | b2s:'pause'}}"></a>
+                <a id="next" ng-click="action('next')"></a>
+                <a id="like" ng-click="action('like')" class="{{isLike | b2s:'on'}}"></a>
+                <a id="trash" ng-click="action('trash')"></a>
+                <a id="repeat" ng-click="action('repeat')" class="{{isRepeat | b2s:'on'}}"></a>
+            </div>
+        </section>
+
+        <script src="../lib/zepto.min.js"></script>
+        <script src="../lib/angular.min.js"></script>
+        <script src="../js/notify.js" charset="utf-8" ></script>
+    </body>
+</html>

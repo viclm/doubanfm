@@ -16,7 +16,7 @@
     },
 
     "background": {
-        "scripts": ["js/zepto.min.js", "js/underscore-min.js", "js/backbone-min.js", "js/background.js"]
+        "scripts": ["lib/zepto.min.js", "lib/underscore-min.js", "lib/backbone-min.js", "js/background.js"]
     },
 
     "options_page": "partials/options.html",

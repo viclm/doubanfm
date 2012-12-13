@@ -1,0 +1,85 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+body {
+    font: 12px/18px "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
+    width: 275px;
+    height: 40px;
+    margin: 0;
+    color: white;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: horizontal;
+    -webkit-box-align: center;
+    background-color: rgba(0, 0, 0, 0.75);
+    padding: 10px;
+}
+
+img {
+    margin-right: 10px;
+    border: 1px solid #ccc;
+}
+
+section {
+    height: 40px;
+    display: -webkit-box;
+    -webkit-box-align: center;
+}
+
+h1 {
+    font-size: 1.5em;
+    margin-top: 5px;
+    color: #139fd0;
+}
+
+a {
+    text-decoration: none;
+    display: inline-block;
+    width: 25px;
+    height: 25px;
+    cursor: pointer;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+}
+
+#play {
+    width: 30px;
+    height: 30px;
+    background-image: url(../img/play.png);
+}
+
+#play.pause {
+    width: 30px;
+    height: 30px;
+    background-image: url(../img/pause.png);
+}
+
+#next {
+    background-image: url(../img/next.png);
+    margin-right: 5px;
+}
+
+#prev {
+    background-image: url(../img/prev.png);
+}
+
+#like {
+    background-image: url(../img/love.png);
+}
+
+#like.on {
+    background-image: url(../img/lovei.png);
+}
+
+#trash {
+    background-image: url(../img/trash.png);
+}
+
+#repeat {
+    background-image: url(../img/repeat.png);
+}
+
+#repeat.on {
+    background-image: url(../img/repeati.png);
+}

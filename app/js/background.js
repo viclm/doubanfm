@@ -145,7 +145,7 @@ dfm.Player = Backbone.View.extend({
                                 this.notify.clear();
                             }
                             else {
-                                //this.notify.timer();
+                                this.notify.timer();
                             }
                         }
                         break;
@@ -298,8 +298,7 @@ dfm.Player = Backbone.View.extend({
         var notify, visible = false, timer = null, self = this;
         return {
             show: function () {
-                notify = localStorage.notifyStyle === '1' ? window.webkitNotifications.createNotification(
-        self.playList.at(self.current).get('picture'), self.playList.at(self.current).get('title'), self.playList.at(self.current).get('artist')) : webkitNotifications.createHTMLNotification('../partials/popup.html');
+                notify = webkitNotifications.createHTMLNotification('../partials/notify.html');
                 notify.show();
                 visible = true;
                 this.timer();
