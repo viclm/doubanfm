@@ -12,12 +12,12 @@
                 <p>{{source}}</p>
             </div>
             <div ng-show="hover">
-                <a id="prev" ng-click="action('prev')"></a>
-                <a id="play" ng-click="action('play')" class="{{isPlay | b2s:'pause'}}"></a>
-                <a id="next" ng-click="action('next')"></a>
-                <a id="like" ng-click="action('like')" class="{{isLike | b2s:'on'}}"></a>
-                <a id="trash" ng-click="action('trash')"></a>
-                <a id="repeat" ng-click="action('repeat')" class="{{isRepeat | b2s:'on'}}"></a>
+                <a id="prev" ng-click="action('prev')">Prev</a>
+                <a id="play" ng-click="action('play')" class="{{isPlay | b2s:'pause'}}">Play/Pause</a>
+                <a id="next" ng-click="action('next')">Next</a>
+                <a id="like" ng-click="action('like')" class="{{isLike | b2s:'on'}}">Like</a>
+                <a id="trash" ng-click="action('trash')">Trash</a>
+                <a id="repeat" ng-click="action('repeat')" class="{{isRepeat | b2s:'on'}}">Repeat</a>
             </div>
         </section>
 

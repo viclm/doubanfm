@@ -518,4 +518,14 @@ dfm.Player = Backbone.View.extend({
 
 });
 
-new dfm.Player;
+
+$.get('http://www.douban.com/j/app/radio/channels', function (data) {
+    data = JSON.parse(data);
+    var channelList = {};
+    data.channels.forEach(function (channel) {
+        channelList[channel.channel_id] = channel.name;
+    });
+    channelList[-3] = '红心兆赫';
+    localStorage.channelList = JSON.stringify(channelList);
+    new dfm.Player;
+}, 'json');

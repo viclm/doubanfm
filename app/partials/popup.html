@@ -15,21 +15,21 @@
                 </header>
                 <section>
                     <p>{{message}}</p>
-                    <select blink="channel" ng-show="hover" ng-change="action('channel')" ng-model="channel" ng-options="key as value for (key, value) in channelList"></select>
+                    <select blink="channel" ng-class="hover|b2s:'show'" ng-change="action('channel')" ng-model="channel" ng-options="key as value for (key, value) in channelList"></select>
                 </section>
                 <footer>
                     <div class="left">
-                        <a id="like" ng-click="action('like')" class="{{isLike | b2s:'on'}}">like</a>
+                        <a id="like" ng-click="action('like')" class="{{isLike|b2s:'on'}}">like</a>
                         <a id="trash" ng-click="action('trash')">trash</a>
                     </div>
                     <div class="middle">
                         <a id="prev" ng-click="action('prev')">prev</a>
-                        <a id="play" ng-click="action('play')" class="{{isPlay | b2s:'pause'}}">play</a>
+                        <a id="play" ng-click="action('play')" class="{{isPlay|b2s:'pause'}}">play</a>
                         <a id="next" ng-click="action('next')">next</a>
                     </div>
                     <div class="right">
                         <a id="sound" ng-click="soundCtr=!soundCtr">sound</a>
-                        <a id="repeat" ng-click="action('repeat')" class="{{isRepeat | b2s:'on'}}">loop</a>
+                        <a id="repeat" ng-click="action('repeat')" class="{{isRepeat|b2s:'on'}}">loop</a>
                     </div>
                     <input type="range" ng-show="soundCtr" ng-change="action('volume')" ng-model="volume" />
                 </footer>
@@ -46,10 +46,7 @@
         <div id="left"></div>
         <div id="right"></div>
 
-        <script src="../lib/zepto.min.js"></script>
         <script src="../lib/angular.min.js"></script>
-        <script src="../js/channel.js" charset="utf-8" ></script>
-        <script src="../js/rjs.js"></script>
         <script src="../js/base64.js"></script>
         <script src="../js/popup.js" charset="utf-8" ></script>
     </body>

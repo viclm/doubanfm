@@ -1,61 +1,63 @@
-var jQuery = Zepto;
+var $ = function () {
+    return angular.element()
+}
 
-var View = rjs.Class({
-    init: function (opt) {
-        this.slide = $('#tracker');
-        this.btnPrev = $('#left');
-        this.btnNext = $('#right');
-        this.loop = true;
-        this.length = 2;
+var player = angular.module('player', []);
+
+player.factory('slideshow', ['$document', function ($document) {
+
+    function Slideshow(opt) {
+        this.slide = angular.element(document.querySelector(opt.slide));
+        this.btnPrev = angular.element(document.querySelector(opt.btnPrev));
+        this.btnNext = angular.element(document.querySelector(opt.btnNext));
+        this.loop = opt.loop;
 
         var self = this, hover = false;
 
-        this.btnPrev.on('mouseover', function (e) {
+        this.btnPrev.bind('mouseover', function (e) {
             hover = true;
             setTimeout(function () {
                 if (hover) {self.prev();}
             }, 500);
         });
 
-        this.btnPrev.on('mouseout', function (e) {
-            hover = false;
-        }, false);
+        this.btnPrev.bind('mouseout', function (e) {hover = false;}, false);
 
-        this.btnNext.on('mouseover', function (e) {
+        this.btnNext.bind('mouseover', function (e) {
             hover = true;
             setTimeout(function () {
                 if (hover) {self.next();}
             }, 500);
         }, false);
 
-        this.btnNext.on('mouseout', function (e) {
-            hover = false;
-        }, false);
+        this.btnNext.bind('mouseout', function (e) {hover = false;}, false);
 
-    },
-    prev: function () {
+    };
+
+    Slideshow.prototype.prev = function () {
         if (this.slide.css('left') ===  '0px') {
-            this.slide.children().first().appendTo(this.slide);
+            this.slide.children().eq(0).appendTo(this.slide);
             this.slide.css('-webkit-transition', 'none');
             this.slide.css('left', '-100%');
         }
-        this.slide.width();
+        this.slide.css('width');
         this.slide.css('-webkit-transition', 'left .5s');
         this.slide.css('left', 0);
-    },
-    next: function () {
+    };
+
+    Slideshow.prototype.next = function () {
         if (this.slide.css('left') ===  '-100%') {
-            this.slide.children().first().appendTo(this.slide);
+            this.slide.children().eq(0).appendTo(this.slide);
             this.slide.css('-webkit-transition', 'none');
             this.slide.css('left', '0');
         }
-        this.slide.width();
+        this.slide.css('width');
         this.slide.css('-webkit-transition', 'left .5s');
         this.slide.css('left', '-100%');
-    }
-});
+    };
 
-var player = angular.module('player', []);
+    return Slideshow;
+}]);
 
 player.filter('strftime', function () {
     return function(seconds) {
@@ -74,9 +76,9 @@ player.filter('b2s', function () {
 player.directive('blink', ['$timeout', function ($timeout) {
     return function (scope, element, attrs) {
         scope.$watch(attrs.blink, function (value) {
-            element.css('opacity', '1');
+            element.addClass('show');
             $timeout(function () {
-                element.css('opacity', '0');
+                element.removeClass('show');
             }, 3000);
         }, true);
     }
@@ -198,9 +200,8 @@ player.directive('login', ['$http', function ($http) {
     };
 }]);
 
-player.controller('Player', ['$scope', '$timeout', '$window', function ($scope, $timeout, $window) {
+player.controller('Player', ['$scope', '$timeout', '$window', 'slideshow', function ($scope, $timeout, $window, slideshow) {
 
-    var win = new View();
     var port = chrome.extension.connect({name: 'fm'});
     port.postMessage({cmd: 'get'});
     port.onMessage.addListener(function (msg) {
@@ -251,7 +252,14 @@ player.controller('Player', ['$scope', '$timeout', '$window', function ($scope, 
         }
     });
 
-    $(window).on('resize', function () {
+    new slideshow({
+        slide: '#tracker',
+        btnPrev: '#left',
+        btnNext: '#right',
+        loop: true
+    });
+
+    angular.element($window).bind('resize', function () {
         $(document.body).css({
             width: window.innerWidth + 'px',
             height: window.innerHeight + 'px'
@@ -277,7 +285,7 @@ player.controller('Player', ['$scope', '$timeout', '$window', function ($scope, 
     $scope.message = '';
 
     $scope.channel = localStorage.channel;
-    $scope.channelList = channelList;
+    $scope.channelList = JSON.parse(localStorage.channelList);
 
     $scope.playlist = [];
     $scope.current = 0;
