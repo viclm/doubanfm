@@ -1,62 +1,49 @@
-var $ = function () {
-    return angular.element()
-}
-
 var player = angular.module('player', []);
 
-player.factory('slideshow', ['$document', function ($document) {
+player.factory('slideshow', [function () {
 
     function Slideshow(opt) {
         this.slide = angular.element(document.querySelector(opt.slide));
         this.btnPrev = angular.element(document.querySelector(opt.btnPrev));
         this.btnNext = angular.element(document.querySelector(opt.btnNext));
-        this.loop = opt.loop;
 
-        var self = this, hover = false;
-
-        this.btnPrev.bind('mouseover', function (e) {
-            hover = true;
-            setTimeout(function () {
-                if (hover) {self.prev();}
-            }, 500);
-        });
-
-        this.btnPrev.bind('mouseout', function (e) {hover = false;}, false);
-
-        this.btnNext.bind('mouseover', function (e) {
-            hover = true;
-            setTimeout(function () {
-                if (hover) {self.next();}
-            }, 500);
-        }, false);
-
-        this.btnNext.bind('mouseout', function (e) {hover = false;}, false);
-
+        this.btnPrev.bind('click', this.prev.bind(this));
+        this.btnNext.bind('click', this.next.bind(this));
     };
 
     Slideshow.prototype.prev = function () {
         if (this.slide.css('left') ===  '0px') {
-            this.slide.children().eq(0).appendTo(this.slide);
+            this.slide.prepend(this.slide.children().eq(1));
             this.slide.css('-webkit-transition', 'none');
             this.slide.css('left', '-100%');
         }
-        this.slide.css('width');
+        this.slide[0].offsetWidth;
         this.slide.css('-webkit-transition', 'left .5s');
         this.slide.css('left', 0);
     };
 
     Slideshow.prototype.next = function () {
         if (this.slide.css('left') ===  '-100%') {
-            this.slide.children().eq(0).appendTo(this.slide);
+            this.slide.append(this.slide.children().eq(0));
             this.slide.css('-webkit-transition', 'none');
             this.slide.css('left', '0');
         }
-        this.slide.css('width');
+        this.slide[0].offsetWidth;
         this.slide.css('-webkit-transition', 'left .5s');
         this.slide.css('left', '-100%');
     };
 
-    return Slideshow;
+    return {
+        run: function (o) {
+            this.instance = new Slideshow(o);
+        },
+        prev: function () {
+            this.instance.prev();
+        },
+        next: function () {
+            this.instance.next();
+        }
+    };
 }]);
 
 player.filter('strftime', function () {
@@ -208,9 +195,9 @@ player.controller('Player', ['$scope', '$timeout', '$window', 'slideshow', funct
         $timeout(function (){});
         switch (msg.cmd) {
         case 'progress':
-            if (msg.length) {
+            if (msg.duration) {
                 $scope.time = msg.time;
-                $scope.progress = msg.time / msg.length * 100;
+                $scope.progress = msg.time / msg.duration * 100;
                 if (msg.lrc) {
                     $scope.message = msg.lrc;
                 }
@@ -218,11 +205,11 @@ player.controller('Player', ['$scope', '$timeout', '$window', 'slideshow', funct
             break;
         case 'set':console.log(msg)
             $scope.album = msg.album;
-            $scope.isLike = !!msg.like;
+            $scope.isLike = msg.isLike;
             $scope.isPlay = msg.isPlay;
             $scope.isRepeat = msg.isRepeat;
             $scope.picture = msg.picture;
-            $scope.progress = msg.length ? msg.time / msg.length * 100 : 0;
+            $scope.progress = msg.duration ? msg.time / msg.duration * 100 : 0;
             $scope.source = msg.artist + ' | ' + msg.albumtitle;
             $scope.time = msg.time;
             $scope.title = msg.title;
@@ -230,8 +217,7 @@ player.controller('Player', ['$scope', '$timeout', '$window', 'slideshow', funct
             if (!msg.canplaythrough) {
                 $scope.message = '载入中...';
             }
-            $scope.channel = localStorage.channel;
-            $scope.playlist = msg.list;
+            $scope.playlist = msg.playlist;
             $scope.current = Number(msg.current);
             break;
         case 'canplaythrough':
@@ -252,15 +238,14 @@ player.controller('Player', ['$scope', '$timeout', '$window', 'slideshow', funct
         }
     });
 
-    new slideshow({
+    slideshow.run({
         slide: '#tracker',
         btnPrev: '#left',
-        btnNext: '#right',
-        loop: true
+        btnNext: '#right'
     });
 
     angular.element($window).bind('resize', function () {
-        $(document.body).css({
+        angular.element(document.body).css({
             width: window.innerWidth + 'px',
             height: window.innerHeight + 'px'
         });
@@ -296,38 +281,36 @@ player.controller('Player', ['$scope', '$timeout', '$window', 'slideshow', funct
         var target = document.body, r = e.relatedTarget;
         while (r && r !== target) {r = r.parentNode;}
         if (r !== target) {
-            port.postMessage({cmd: 'event', type: e.type});
+            //port.postMessage({cmd: 'event', type: e.type});
             $scope.hover = e.type === 'mouseover';
         }
     };
 
     $scope.action = function (type, e) {
+        var value;
         switch (type) {
         case 'channel':
-            port.postMessage({cmd: type, value: $scope.channel});
+            value = $scope.channel;
             break;
         case 'index':
-            if (e.target.className !== 'active') {
-                port.postMessage({cmd: type, index: Number(e.target.dataset.index)});
-                win.prev();
-            }
+            value = Number(e.target.dataset.index);
+            slideshow.prev();
             break;
         case 'like':
         case 'play':
         case 'repeat':
             var prop = 'is' + type.replace(/^./, function (s) {return s.toUpperCase();});
             $scope[prop] = !$scope[prop];
-            port.postMessage({cmd: type, value: $scope[prop]});
+            value = $scope[prop];
             break;
         case 'skip':
-            port.postMessage({cmd: 'skip', rate: e.offsetX/e.target.offsetWidth});
+            value = $scope.duration * e.offsetX / e.target.offsetWidth;;
             break;
         case 'volume':
-            port.postMessage({cmd: type, value: $scope.volume});
+            value = $scope.volume;
             break;
-        default:
-            port.postMessage({cmd: type});
         }
+        port.postMessage({cmd: type, value: value});
         e && e.preventDefault();
     };
 

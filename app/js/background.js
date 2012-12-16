@@ -1,8 +1,8 @@
-localStorage.channel || (localStorage.channel = '1');
-localStorage.notify || (localStorage.notify = '1');
-localStorage.lrc || (localStorage.lrc = '1');
-localStorage.pin || (localStorage.pin = '0');
-localStorage.volume || (localStorage.volume = '100');
+!isNaN(parseFloat(localStorage.channel)) || (localStorage.channel = '1');
+!isNaN(parseFloat(localStorage.volume)) || (localStorage.volume = '100');
+['0', '1'].indexOf(localStorage.notify) > -1 || (localStorage.notify = '1');
+['0', '1'].indexOf(localStorage.lrc) > -1 || (localStorage.lrc = '1');
+['0', '1'].indexOf(localStorage.pin) > -1 || (localStorage.pin = '0');
 
 var dfm = {};
 
@@ -141,7 +141,7 @@ dfm.Player = Backbone.View.extend({
                     switch (msg.cmd) {
                     case 'event':
                         if (this.notify.isVisible()) {
-                            if (msg.type === 'mouseover') {
+                            if (msg.value === 'mouseover') {
                                 this.notify.clear();
                             }
                             else {
@@ -150,11 +150,11 @@ dfm.Player = Backbone.View.extend({
                         }
                         break;
                     case 'skip':
-                        this.el.currentTime = this.el.duration * msg.rate;
+                        this.el.currentTime = msg.value;
                         break;
                     case 'play':
                         this.isPlay = msg.value;
-                        if (msg.value) {
+                        if (this.isPlay) {
                             chrome.browserAction.setIcon({path: '../img/icon_small.png'});
                             if (this.playList.length) {
                                 this.el.play();
@@ -192,7 +192,7 @@ dfm.Player = Backbone.View.extend({
                         port.postMessage(this.getCurrentSongInfo());
                         break;
                     case 'index':
-                        this.current = msg.index;
+                        this.current = msg.value;
                         this.el.src = this.playList.at(this.current).get('url');
                         if (this.isPlay) {this.el.play();}
                         port.postMessage(this.getCurrentSongInfo());
@@ -251,7 +251,7 @@ dfm.Player = Backbone.View.extend({
                                 else {
                                     this.el.src = this.playList.at(0).get('url');
                                     if (this.isPlay) {
-                                        this.el.volume = Number(localStorage.volume) / 100;
+                                        this.el.volume = parseFloat(localStorage.volume) / 100;
                                         this.el.play();
                                         chrome.browserAction.setIcon({path: '../img/icon_small.png'});
                                     }
@@ -261,18 +261,20 @@ dfm.Player = Backbone.View.extend({
                         }
                         break;
                     case 'channel':
+                        var channelBak = localStorage.channel;
                         localStorage.channel = msg.value;
                         this.playList.remove(this.playList.models.slice(this.current + 1));
                         this.fetchSongs('n', function (loginNeeded) {
                             var self = this;
                             if (loginNeeded) {
+                                localStorage.channel = channelBak;
                                 port.postMessage({cmd: 'oauth', type: loginNeeded});
                             }
                             else {
                                 this.current += 1;
                                 this.el.src = this.playList.at(this.current).get('url');
                                 if (this.isPlay) {
-                                    this.el.volume = Number(localStorage.volume) / 100;
+                                    this.el.volume = parseFloat(localStorage.volume) / 100;
                                     this.el.play();
                                 }
                                 port.postMessage(this.getCurrentSongInfo());
@@ -356,7 +358,7 @@ dfm.Player = Backbone.View.extend({
             if(this.p) {
                 lrc = this.playList.at(this.current).get('lrc');
                 msg = {cmd: 'progress', time: currentTime};
-                msg.length = Math.round(this.el.duration);
+                msg.duration = Math.round(this.el.duration);
                 if(lrc && lrc[currentTime]) {
                     msg.lrc = lrc[currentTime];
                 }
@@ -400,7 +402,7 @@ dfm.Player = Backbone.View.extend({
                 this.playList.remove(this.playList.at(this.current));
                 this.el.src = this.playList.at(this.current).get('url');
                 if (this.isPlay) {
-                    this.el.volume = Number(localStorage.volume) / 100;
+                    this.el.volume = parseInt(localStorage.volume) / 100;
                     this.el.play();
                 }
                 this.p && this.p.postMessage(this.getCurrentSongInfo());
@@ -430,18 +432,18 @@ dfm.Player = Backbone.View.extend({
         var info = this.playList.at(this.current).toJSON();
         info.cmd = 'set';
         info.time = this.time;
-        info.length = Math.floor(this.el.duration);
+        info.duration = Math.floor(this.el.duration);
         info.isPlay = this.isPlay;
+        info.isLike = !!info.like;
         info.isRepeat = this.isRepeat;
-        info.volume = this.el.volume;
         info.canplaythrough = this.canplaythrough;
         info.current = this.current;
-        info.list = this.playList.toJSON();
+        info.playlist = this.playList.toJSON();
         return info;
     },
 
     fetchSongs: function (type, fn) {
-        var channel = Number(localStorage.channel),
+        var channel = parseFloat(localStorage.channel),
             fetch = function () {
                 var data = 'type='+type+'&channel='+channel+'&from=mainsite&r='+self.rand();
                 if (type !== 'n') {
@@ -461,10 +463,7 @@ dfm.Player = Backbone.View.extend({
             },
             self = this;
 
-        if (isNaN(channel)) {
-            localStorage.channel = channel = 1;
-        }
-        if (channel < 1) {
+        if (channel < 1 || 'rub'.indexOf(type) > -1) {
             chrome.cookies.get({
                 url: 'http://douban.com',
                 name: 'dbcl2'

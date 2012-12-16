@@ -1,5 +1,3 @@
-var jQuery = Zepto;
-
 var player = angular.module('player', []);
 
 player.filter('b2s', function () {
@@ -29,9 +27,9 @@ player.controller('Player', ['$scope', '$timeout', function ($scope, $timeout) {
     port.onMessage.addListener(function (msg) {
         $timeout(function (){});
         switch (msg.cmd) {
-        case 'set':console.log(msg)
+        case 'set':
             $scope.album = msg.album;
-            $scope.isLike = !!msg.like;
+            $scope.isLike = msg.isLike;
             $scope.isPlay = msg.isPlay;
             $scope.isRepeat = msg.isRepeat;
             $scope.picture = msg.picture;
@@ -57,38 +55,36 @@ player.controller('Player', ['$scope', '$timeout', function ($scope, $timeout) {
         var target = document.body, r = e.relatedTarget;
         while (r && r !== target) {r = r.parentNode;}
         if (r !== target) {
-            port.postMessage({cmd: 'event', type: e.type});
+            port.postMessage({cmd: 'event', value: e.type});
             $scope.hover = e.type === 'mouseover';
         }
     };
 
     $scope.action = function (type, e) {
+        var value;
         switch (type) {
         case 'channel':
-            port.postMessage({cmd: type, value: $scope.channel});
+            value = $scope.channel;
             break;
         case 'index':
-            if (e.target.className !== 'active') {
-                port.postMessage({cmd: type, index: Number(e.target.dataset.index)});
-                win.prev();
-            }
+            value = Number(e.target.dataset.index);
+            win.prev();
             break;
         case 'like':
         case 'play':
         case 'repeat':
             var prop = 'is' + type.replace(/^./, function (s) {return s.toUpperCase();});
             $scope[prop] = !$scope[prop];
-            port.postMessage({cmd: type, value: $scope[prop]});
+            value = $scope[prop];
             break;
         case 'skip':
-            port.postMessage({cmd: 'skip', rate: e.offsetX/e.target.offsetWidth});
+            value = $scope.length * e.offsetX / e.target.offsetWidth;;
             break;
         case 'volume':
-            port.postMessage({cmd: type, value: $scope.volume});
+            value = $scope.volume;
             break;
-        default:
-            port.postMessage({cmd: type});
         }
+        port.postMessage({cmd: type, value: value});
         e && e.preventDefault();
     };
 

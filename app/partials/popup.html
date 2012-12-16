@@ -7,9 +7,9 @@
     </head>
     <body ng-controller="Player" keyup="hotkey($event)" ng-mouseover="onhover($event)" ng-mouseout="onhover($event)">
         <div id="tracker">
-            <div id="player" ng-style="{'background-image': 'url('+picture+')'}" ng-click="openAlbum($event)" ontextmenu="action('play', $event)">
+            <div id="player" ng-style="{'background-image': 'url('+picture+')'}" ng-click="openAlbum($event)" 1contextmenu="action('play', $event)">
                 <header>
-                    <progress title="{{time | strftime}}" value="{{progress}}" min="0" max="100" ng-click="action('skip', $event)"></progress>
+                    <progress title="{{time | strftime}}" value="{{progress}}" max="100" ng-click="action('skip', $event)"></progress>
                     <p>{{source}}</p>
                     <h1>{{title}}</h1>
                 </header>
@@ -43,8 +43,8 @@
 
         <div id="oauth" login="loginNeeded"></div>
 
-        <div id="left"></div>
-        <div id="right"></div>
+        <div id="left" ng-show="hover"></div>
+        <div id="right" ng-show="hover"></div>
 
         <script src="../lib/angular.min.js"></script>
         <script src="../js/base64.js"></script>
