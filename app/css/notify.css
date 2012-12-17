@@ -39,6 +39,7 @@ a {
     width: 25px;
     height: 25px;
     cursor: pointer;
+    text-indent: -99999px;
     background-repeat: no-repeat;
     background-size: 100% 100%;
 }
