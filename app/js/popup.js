@@ -195,23 +195,21 @@ player.controller('Player', ['$scope', '$timeout', '$window', 'slideshow', funct
         $timeout(function (){});
         switch (msg.cmd) {
         case 'progress':
-            if (msg.duration) {
-                $scope.time = msg.time;
-                $scope.progress = msg.time / msg.duration * 100;
-                if (msg.lrc) {
-                    $scope.message = msg.lrc;
-                }
+            $scope.time = msg.time;
+            $scope.duration = msg.duration;
+            if (msg.lrc) {
+                $scope.message = msg.lrc;
             }
             break;
-        case 'set':console.log(msg)
+        case 'set':console.log(msg, msg.duration)
             $scope.album = msg.album;
             $scope.isLike = msg.isLike;
             $scope.isPlay = msg.isPlay;
             $scope.isRepeat = msg.isRepeat;
             $scope.picture = msg.picture;
-            $scope.progress = msg.duration ? msg.time / msg.duration * 100 : 0;
             $scope.source = msg.artist + ' | ' + msg.albumtitle;
             $scope.time = msg.time;
+            $scope.duration = msg.duration;//maybe null
             $scope.title = msg.title;
             $scope.url = msg.url;
             if (!msg.canplaythrough) {
@@ -221,7 +219,7 @@ player.controller('Player', ['$scope', '$timeout', '$window', 'slideshow', funct
             $scope.current = Number(msg.current);
             break;
         case 'canplaythrough':
-            $scope.progress = 0;
+            $scope.time = 0;
             if (msg.status) {
                 $scope.message = '';
             }
@@ -260,9 +258,9 @@ player.controller('Player', ['$scope', '$timeout', '$window', 'slideshow', funct
     $scope.isPlay = true;
     $scope.isRepeat = false;
     $scope.picture = '';
-    $scope.progress = 0;
     $scope.source = '';
     $scope.time = 0;
+    $scope.duration = 0;
     $scope.title = '正在获取歌曲，请稍候';
     $scope.url = '';
     $scope.volume = localStorage.volume;
@@ -304,7 +302,7 @@ player.controller('Player', ['$scope', '$timeout', '$window', 'slideshow', funct
             value = $scope[prop];
             break;
         case 'skip':
-            value = $scope.duration * e.offsetX / e.target.offsetWidth;;
+            value = $scope.duration * e.offsetX / e.target.offsetWidth;
             break;
         case 'volume':
             value = $scope.volume;

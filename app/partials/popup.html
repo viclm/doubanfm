@@ -9,7 +9,7 @@
         <div id="tracker">
             <div id="player" ng-style="{'background-image': 'url('+picture+')'}" ng-click="openAlbum($event)" 1contextmenu="action('play', $event)">
                 <header>
-                    <progress title="{{time | strftime}}" value="{{progress}}" max="100" ng-click="action('skip', $event)"></progress>
+                    <progress title="{{time | strftime}}" value="{{time/duration*100}}" max="100" ng-click="action('skip', $event)"></progress>
                     <p>{{source}}</p>
                     <h1>{{title}}</h1>
                 </header>
