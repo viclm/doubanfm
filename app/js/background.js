@@ -518,13 +518,26 @@ dfm.Player = Backbone.View.extend({
 });
 
 
-$.get('http://www.douban.com/j/app/radio/channels', function (data) {
-    data = JSON.parse(data);
-    var channelList = {};
-    data.channels.forEach(function (channel) {
-        channelList[channel.channel_id] = channel.name;
+(function init() {
+    $.ajax({
+        url: 'http://www.douban.com/j/app/radio/channels',
+        dataType: 'json',
+        success: function (data) {
+            var channelList = {};
+            data.channels.forEach(function (channel) {
+                channelList[channel.channel_id] = channel.name;
+            });
+            channelList[-3] = '红心兆赫';
+            localStorage.channelList = JSON.stringify(channelList);
+            new dfm.Player;
+        },
+        error: function (jqXHR) {
+            if (localStorage.channelList) {
+                new dfm.Player;
+            }
+            else {
+                init();
+            }
+        }
     });
-    channelList[-3] = '红心兆赫';
-    localStorage.channelList = JSON.stringify(channelList);
-    new dfm.Player;
-}, 'json');
+})();
