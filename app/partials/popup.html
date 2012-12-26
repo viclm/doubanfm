@@ -1,0 +1,53 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN" ng-csp ng-app="player">
+    <head>
+        <meta charset="UTF-8">
+        <title>豆瓣FM 精美版</title>
+        <link rel="stylesheet" href="../css/popup.css" />
+    </head>
+    <body ng-controller="Player" keyup="hotkey($event)" ng-mouseover="onhover($event)" ng-mouseout="onhover($event)">
+        <div id="tracker">
+            <div id="player" ng-style="{'background-image': 'url('+picture+')'}" ng-click="openAlbum($event)" 1contextmenu="action('play', $event)">
+                <header>
+                    <progress title="{{time | strftime}}" value="{{time/duration*100}}" max="100" ng-click="action('skip', $event)"></progress>
+                    <p>{{source}}</p>
+                    <h1>{{title}}</h1>
+                </header>
+                <section>
+                    <p>{{message}}</p>
+                    <select blink="channel" ng-class="hover|b2s:'show'" ng-change="action('channel')" ng-model="channel" ng-options="key as value for (key, value) in channelList"></select>
+                </section>
+                <footer>
+                    <div class="left">
+                        <a id="like" ng-click="action('like')" class="{{isLike|b2s:'on'}}">like</a>
+                        <a id="trash" ng-click="action('trash')">trash</a>
+                    </div>
+                    <div class="middle">
+                        <a id="prev" ng-click="action('prev')">prev</a>
+                        <a id="play" ng-click="action('play')" class="{{isPlay|b2s:'pause'}}">play</a>
+                        <a id="next" ng-click="action('next')">next</a>
+                    </div>
+                    <div class="right">
+                        <a id="sound" ng-click="soundCtr=!soundCtr">sound</a>
+                        <a id="repeat" ng-click="action('repeat')" class="{{isRepeat|b2s:'on'}}">loop</a>
+                    </div>
+                    <input type="range" ng-show="soundCtr" ng-change="action('volume')" ng-model="volume" />
+                </footer>
+            </div>
+            <div id="list" ng-style="{'background-image': 'url('+picture+')'}">
+                <section mousewheel="onmousewheel($event)" ng-style="{top: -(current*25-((window.innerHeight-25)/2))+'px'}">
+                    <p ng-repeat="p in playlist" data-index="{{$index}}" class="{{$index == current | b2s:'active'}}" ng-click="action('index', $event)">{{p.title}} - {{p.artist}}</p>
+                </section>
+            </div>
+        </div>
+
+        <div id="oauth" login="loginNeeded"></div>
+
+        <div id="left" ng-show="hover"></div>
+        <div id="right" ng-show="hover"></div>
+
+        <script src="../lib/angular.min.js"></script>
+        <script src="../js/base64.js"></script>
+        <script src="../js/popup.js" charset="utf-8" ></script>
+    </body>
+</html>
